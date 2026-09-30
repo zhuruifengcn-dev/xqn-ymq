@@ -1,0 +1,2856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🏸 快、狠、准、活</title>
+<!-- 数据通过 CloudBase 云函数 API 同步 -->
+<style>
+:root {
+  --primary: #10B981;
+  --primary-dark: #059669;
+  --primary-light: #D1FAE5;
+  --danger: #EF4444;
+  --danger-light: #FEE2E2;
+  --warn: #F59E0B;
+  --warn-light: #FEF3C7;
+  --info: #3B82F6;
+  --info-light: #DBEAFE;
+  --purple: #8B5CF6;
+  --purple-light: #EDE9FE;
+  --orange: #F97316;
+  --orange-light: #FFF7ED;
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --text: #1E293B;
+  --text2: #64748B;
+  --text3: #94A3B8;
+  --border: #E2E8F0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+  -webkit-tap-highlight-color: transparent;
+}
+.top-bar {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  padding: 16px 16px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+.top-bar-row { display: flex; align-items: center; justify-content: space-between; }
+.top-bar h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.top-bar .subtitle { font-size: 12px; opacity: 0.85; margin-top: 3px; }
+.sync-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+.sync-badge.online { color: #A7F3D0; }
+.sync-badge.offline { color: #FCA5A5; }
+.admin-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.3);
+  transition: background 0.2s;
+}
+.admin-badge:hover { background: rgba(255,255,255,0.3); }
+.admin-badge.is-admin { background: rgba(255,200,0,0.3); border-color: rgba(255,200,0,0.5); }
+.tab-nav {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 61px;
+  z-index: 99;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex: none;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition: color 0.2s;
+}
+.tab-btn.active { color: var(--primary); font-weight: 600; }
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 14px; right: 14px;
+  height: 2.5px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+.tab-btn .badge-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  background: var(--danger);
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--card);
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-input:focus { border-color: var(--primary); }
+select.form-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.form-row { display: flex; gap: 10px; }
+.form-row > * { flex: 1; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-warn { background: var(--warn); color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-outline:hover { background: var(--primary-light); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-block { width: 100%; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.chip.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.player-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--info-light);
+  color: var(--info);
+  margin: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.player-tag.selected { background: var(--primary); color: #fff; }
+.score-board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0;
+}
+.score-side { text-align: center; flex: 1; }
+.score-num {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.score-num.winner { color: var(--primary); }
+.score-vs { font-size: 16px; font-weight: 700; color: var(--text3); }
+.score-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.score-ctrl {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.score-ctrl:active { transform: scale(0.9); }
+.score-ctrl.plus-a { border-color: var(--primary); color: var(--primary); }
+.score-ctrl.plus-a:active { background: var(--primary); color: #fff; }
+.score-ctrl.plus-b { border-color: var(--info); color: var(--info); }
+.score-ctrl.plus-b:active { background: var(--info); color: #fff; }
+.score-ctrl.minus { border-color: var(--danger); color: var(--danger); font-size: 14px; }
+.score-ctrl.minus:active { background: var(--danger); color: #fff; }
+.stat-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-rank {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.rank-1 { background: linear-gradient(135deg,#FBBF24,#F59E0B); color:#fff; }
+.rank-2 { background: linear-gradient(135deg,#D1D5DB,#9CA3AF); color:#fff; }
+.rank-3 { background: linear-gradient(135deg,#D97706,#B45309); color:#fff; }
+.rank-n { background: var(--border); color: var(--text2); }
+.stat-info { flex: 1; min-width: 0; }
+.stat-name { font-size: 14px; font-weight: 600; }
+.stat-detail { font-size: 12px; color: var(--text2); }
+.stat-value { font-size: 14px; font-weight: 700; text-align: right; }
+.stat-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+.stat-bar-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.5s; }
+.match-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  gap: 10px;
+}
+.match-item.pending {
+  background: #FFFBEB;
+  border: 1.5px dashed var(--warn);
+  opacity: 0.95;
+}
+.match-type-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.match-type-badge.mix   { background: #FDE68A; color: #92400E; }
+.match-type-badge.md    { background: #DBEAFE; color: #1E40AF; }
+.match-type-badge.wd    { background: #FCE7F3; color: #9D174D; }
+.match-type-badge.ms    { background: #D1FAE5; color: #065F46; }
+.match-type-badge.ws    { background: #EDE9FE; color: #5B21B6; }
+.match-type-badge.team  { background: #FEF3C7; color: #D97706; }
+.match-type-badge.wylb  { background: #FFE4E6; color: #BE123C; }
+.match-body { flex: 1; min-width: 0; }
+.match-body .line { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.match-body .line b { color: var(--text); }
+.match-body .score-line { font-size: 15px; font-weight: 700; }
+.match-date { font-size: 11px; color: var(--text3); }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-overlay.center { align-items: center; }
+.modal {
+  background: var(--card);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 16px 30px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+.modal.center-modal {
+  border-radius: var(--radius);
+  max-width: 340px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.team-select {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  min-height: 70px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.team-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.team-a .team-select { border-color: rgba(16,185,129,0.3); }
+.team-b .team-select { border-color: rgba(59,130,246,0.3); }
+.team-a .score-num { color: var(--primary); }
+.team-b .score-num { color: var(--info); }
+.game-points { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.game-point-opt {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.game-point-opt.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.custom-points-row {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+}
+.custom-points-row.show { display: flex; }
+.custom-points-row input {
+  width: 70px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: #fff;
+  outline: none;
+  text-align: center;
+}
+.custom-points-row span { font-size: 13px; color: var(--primary-dark); font-weight: 500; }
+.serve-indicator { font-size: 11px; color: var(--warn); font-weight: 600; text-align: center; margin-top: 4px; }
+.score-input {
+  width: 80px; text-align: center; font-size: 36px; font-weight: 800;
+  border-radius: 12px; padding: 4px; outline: none;
+  -moz-appearance: textfield;
+}
+.score-input::-webkit-inner-spin-button,
+.score-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.score-input-a { border: 2px solid var(--primary); color: var(--primary); background: var(--primary-light); }
+.score-input-b { border: 2px solid var(--info); color: var(--info); background: var(--info-light); }
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.stats-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.stats-header::-webkit-scrollbar { display: none; }
+.stats-tab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.stats-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+.sub-stats-tab {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.sub-stats-tab.active { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+.partner-stats-tab {
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.partner-stats-tab.active { border-color: var(--orange); background: var(--orange-light); color: var(--orange); }
+.pending-banner {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border: 1.5px solid #F59E0B;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400E;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pending-banner .cnt { font-weight: 700; color: #D97706; }
+.review-item {
+  background: #FFFBEB;
+  border: 1.5px solid #FDE68A;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.review-submitter { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.review-actions { display: flex; gap: 8px; margin-top: 10px; }
+.admin-hint { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+.pw-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 18px;
+  letter-spacing: 6px;
+  text-align: center;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.pw-input:focus { border-color: var(--primary); }
+.pw-error { color: var(--danger); font-size: 13px; text-align: center; margin-bottom: 12px; }
+.submit-notice {
+  background: var(--warn-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400E;
+  margin-top: 10px;
+  display: none;
+}
+.submit-notice.show { display: block; }
+.loading-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+.loading-overlay.hidden { display: none; }
+.loading-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--text2); }
+.setup-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 998;
+  align-items: center;
+  justify-content: center;
+}
+.setup-overlay.show { display: flex; }
+.setup-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+.setup-card h2 { font-size: 20px; margin-bottom: 8px; }
+.setup-card .desc { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+.setup-card .steps { font-size: 12px; color: var(--text2); margin-top: 12px; line-height: 1.8; }
+
+/* 球员战绩详情弹窗 */
+.player-detail-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; visibility: hidden; opacity: 0; transition: all 0.2s;
+}
+.player-detail-overlay.show { visibility: visible; opacity: 1; }
+.player-detail-modal {
+  background: var(--card); border-radius: var(--radius); padding: 20px;
+  width: 92%; max-width: 420px; max-height: 80vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.player-detail-modal h3 { font-size: 18px; margin-bottom: 4px; }
+.player-detail-modal .p-sub { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+.player-detail-modal .stat-row-detail {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.player-detail-modal .stat-row-detail:last-child { border-bottom: none; }
+.player-detail-modal .stat-type { font-size: 13px; font-weight: 600; min-width: 48px; }
+.player-detail-modal .stat-bar-wrap { flex: 1; height: 20px; background: var(--bg); border-radius: 10px; overflow: hidden; }
+.player-detail-modal .stat-bar-fill { height: 100%; border-radius: 10px; transition: width 0.4s; }
+.player-detail-modal .stat-num { font-size: 12px; color: var(--text2); min-width: 80px; text-align: right; }
+.player-detail-modal .close-btn {
+  position: absolute; top: 12px; right: 16px; background: none; border: none;
+  font-size: 20px; cursor: pointer; color: var(--text2); line-height: 1;
+}
+.player-detail-modal .p-header { position: relative; margin-bottom: 12px; }
+.p-nodata { text-align: center; color: var(--text3); padding: 20px 0; font-size: 13px; }
+
+/* 球员详情：可点击的分类行 */
+.player-detail-modal .cat-row-clickable { cursor: pointer; border-radius: 6px; transition: background 0.15s; }
+.player-detail-modal .cat-row-clickable:hover { background: var(--bg); }
+.player-detail-modal .cat-toggle-arrow { font-size: 11px; color: var(--text3); min-width: 14px; text-align: right; }
+
+/* 球员详情：比赛明细列表 */
+.player-detail-modal .cat-match-list { padding: 4px 0 8px 48px; border-bottom: 1px solid var(--border); }
+.player-detail-modal .cat-match-empty { font-size: 12px; color: var(--text3); padding: 8px 0; }
+.player-detail-modal .cat-match-row { background: var(--bg); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.player-detail-modal .cat-match-row:last-child { margin-bottom: 0; }
+.player-detail-modal .cat-match-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.player-detail-modal .cat-match-time { font-size: 11px; color: var(--text3); }
+.player-detail-modal .cat-match-result { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.player-detail-modal .cat-match-result.result-win { background: #D1FAE5; color: #059669; }
+.player-detail-modal .cat-match-result.result-lose { background: #FEE2E2; color: #DC2626; }
+.player-detail-modal .cat-match-detail { font-size: 12px; color: #334155; margin-bottom: 2px; }
+.player-detail-modal .cat-match-score { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.player-detail-modal .cat-match-location { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+@media (min-width: 600px) {
+  body { max-width: 480px; margin: 0 auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- 加载中 / 诊断面板 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner" id="loadingSpinner"></div>
+  <div class="loading-text" id="loadingText">正在连接云端...</div>
+  <button class="btn btn-outline" id="skipWaitBtn" style="margin-top:20px;display:none;"
+    onclick="fallbackToOffline();">
+    ⚡ 跳过等待，进入离线模式
+  </button>
+</div>
+
+<div class="top-bar">
+  <div class="top-bar-row">
+    <div>
+      <h1>🏸 快、狠、准、活</h1>
+      <div class="subtitle">以我、以快、以攻为主</div>
+      <div class="sync-badge" id="syncBadge">☁️ 云端同步</div>
+    </div>
+    <div class="admin-badge" id="adminBadge" onclick="toggleAdmin()">
+      <span id="adminBadgeIcon">🔒</span>
+      <span id="adminBadgeText">管理员</span>
+    </div>
+  </div>
+</div>
+
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" onclick="switchTab('record')">记录比赛</button>
+  <button class="tab-btn" onclick="switchTab('history')">比赛记录</button>
+  <button class="tab-btn" onclick="switchTab('stats')">数据统计</button>
+  <button class="tab-btn" onclick="switchTab('players')">球员管理</button>
+  <button class="tab-btn" id="reviewTabBtn" onclick="switchTab('review')" style="display:none;">审核管理</button>
+</div>
+
+<!-- ==================== 记录比赛 ==================== -->
+<div class="page active" id="page-record">
+  <div class="pending-banner" id="pendingBanner" style="display:none;">
+    ⏳ 你有 <span class="cnt" id="pendingCount">0</span> 条记录待管理员审核
+  </div>
+  <div class="card">
+    <div class="card-title">📋 比赛类型</div>
+    <div class="chip-group" id="matchTypeGroup">
+      <div class="chip active" data-type="双打">🏸 双打</div>
+      <div class="chip" data-type="单打">🎾 单打</div>
+      <div class="chip" data-type="团体赛">🏅 团体赛</div>
+      <div class="chip" data-type="无羽伦比">🎖 无羽伦比</div>
+    </div>
+    <div id="typeHint" style="display:none;margin-top:10px;padding:8px 12px;background:var(--warn-light);border-radius:var(--radius-sm);font-size:12px;color:#92400E;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🎮 比赛局数</div>
+    <div class="game-points" id="gamePointsGroup">
+      <div class="game-point-opt active" data-points="21">21分制</div>
+      <div class="game-point-opt" data-points="15">15分制</div>
+      <div class="game-point-opt" data-points="11">11分制</div>
+      <div class="game-point-opt" data-points="custom">自定义</div>
+    </div>
+    <div class="custom-points-row" id="customPointsRow">
+      <span>每局</span>
+      <input type="number" id="customPointsInput" value="21" min="5" max="99">
+      <span>分制</span>
+    </div>
+  </div>
+  <div class="card team-a">
+    <div class="card-title" style="color:var(--primary)">🟢 <span id="teamALabel">A方</span><span id="teamASubType" style="font-size:12px;font-weight:400;margin-left:6px;color:var(--primary-dark);"></span></div>
+    <div class="team-select" id="teamA" onclick="openPlayerPicker('A')">
+      <div class="team-label">点击选择球员</div>
+      <div id="teamAPlayers"></div>
+    </div>
+  </div>
+  <div class="card team-b">
+    <div class="card-title" style="color:var(--info)">🔵 <span id="teamBLabel">B方</span><span id="teamBSubType" style="font-size:12px;font-weight:400;margin-left:6px;color:var(--info-dark);"></span></div>
+    <div class="team-select" id="teamB" onclick="openPlayerPicker('B')">
+      <div class="team-label">点击选择球员</div>
+      <div id="teamBPlayers"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🕐 比赛信息</div>
+    <div style="display:grid;gap:8px;">
+      <div>
+        <label style="font-size:12px;color:var(--text2);">比赛时间</label>
+        <input type="datetime-local" class="form-input" id="matchTime" style="margin-top:2px;">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text2);">打球地点</label>
+        <input class="form-input" id="matchLocation" placeholder="可选，如：朝阳公园羽毛球馆" style="margin-top:2px;">
+      </div>
+    </div>
+  </div>
+  <div class="card" id="gamesCard" style="display:none;">
+    <div class="card-title">📊 比赛记分</div>
+    <div class="score-board">
+      <div class="score-side">
+        <div class="team-label">A方</div>
+        <input type="number" id="scoreAInput" value="0" min="0" max="99" class="score-input score-input-a">
+      </div>
+      <div class="score-vs">:</div>
+      <div class="score-side">
+        <div class="team-label">B方</div>
+        <input type="number" id="scoreBInput" value="0" min="0" max="99" class="score-input score-input-b">
+      </div>
+    </div>
+    <div id="serveReceiveArea" style="display:none;">
+      <div class="form-row" style="margin-top:8px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--text2);">🏸 A方发球位</label>
+          <select id="serverSelect" class="form-input" style="margin-top:2px;font-size:13px;">
+            <option value="">（不设置）</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--text2);">🏸 B方接发位</label>
+          <select id="receiverSelect" class="form-input" style="margin-top:2px;font-size:13px;">
+            <option value="">（不设置）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <label style="font-size:12px;color:var(--text2);">👨‍⚖️ 裁判员（可选）</label>
+      <select id="currentReferee" class="form-input" style="margin-top:2px;font-size:13px;" onchange="onRefereeChange()">
+        <option value="">（无裁判）</option>
+        <option value="__manual__">✏️ 其他（手动输入）</option>
+      </select>
+      <input type="text" id="currentRefereeManual" class="form-input" style="margin-top:4px;font-size:13px;display:none;" placeholder="请输入裁判员姓名" maxlength="10">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="addGame()" style="margin-top:12px;">+ 记录本局结果</button>
+    <div id="gamesList" style="margin-top:12px;"></div>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-primary btn-block" onclick="saveMatch()" style="flex:2;">📤 提交比赛</button>
+    <button class="btn btn-outline" onclick="resetCurrent()" style="flex:1;">重置</button>
+  </div>
+</div>
+
+<!-- ==================== 比赛记录 ==================== -->
+<div class="page" id="page-history">
+  <div class="card">
+    <div class="card-title">🔍 筛选</div>
+    <div class="stats-header" id="historyFilter" style="flex-wrap:wrap;">
+      <div class="stats-tab active" data-filter="all">全部</div>
+      <div class="stats-tab" data-filter="双打">双打</div>
+      <div class="stats-tab" data-filter="单打">单打</div>
+      <div class="stats-tab" data-filter="男双">· 男双</div>
+      <div class="stats-tab" data-filter="混双">· 混双</div>
+      <div class="stats-tab" data-filter="女双">· 女双</div>
+      <div class="stats-tab" data-filter="男单">· 男单</div>
+      <div class="stats-tab" data-filter="女单">· 女单</div>
+      <div class="stats-tab" data-filter="团体赛">团体赛</div>
+      <div class="stats-tab" data-filter="无羽伦比">无羽伦比</div>
+    </div>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- ==================== 数据统计 ==================== -->
+<div class="page" id="page-stats">
+  <div class="card">
+    <div class="card-title">📊 总览</div>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div style="flex:1;text-align:center;padding:8px;background:var(--primary-light);border-radius:var(--radius-sm);">
+        <div style="font-size:24px;font-weight:800;color:var(--primary);" id="totalMatches">0</div>
+        <div style="font-size:12px;color:var(--text2);">总场次</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;background:var(--info-light);border-radius:var(--radius-sm);">
+        <div style="font-size:24px;font-weight:800;color:var(--info);" id="totalPlayers">0</div>
+        <div style="font-size:12px;color:var(--text2);">球员数</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;background:var(--warn-light);border-radius:var(--radius-sm);">
+        <div style="font-size:24px;font-weight:800;color:#D97706;" id="todayMatches">0</div>
+        <div style="font-size:12px;color:var(--text2);">今日场次</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="venueFilterCard">
+    <div class="card-title">📍 场地筛选</div>
+    <div class="stats-header" id="venueFilter" style="flex-wrap:wrap;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏆 个人胜率排行榜</div>
+    <div class="stats-header" id="statsFilter" style="flex-wrap:wrap;">
+      <div class="stats-tab active" data-filter="all">全部</div>
+      <div class="stats-tab" data-filter="双打">双打</div>
+      <div class="stats-tab" data-filter="单打">单打</div>
+      <div class="stats-tab" data-filter="男双">· 男双</div>
+      <div class="stats-tab" data-filter="混双">· 混双</div>
+      <div class="stats-tab" data-filter="女双">· 女双</div>
+      <div class="stats-tab" data-filter="男单">· 男单</div>
+      <div class="stats-tab" data-filter="女单">· 女单</div>
+      <div class="stats-tab" data-filter="团体赛">团体赛</div>
+      <div class="stats-tab" data-filter="无羽伦比">无羽伦比</div>
+    </div>
+    <div id="rankList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🥇 个人总胜率排行（综合）</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">综合所有比赛类型，按胜率+场次综合排名</div>
+    <div id="totalWinRankList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🤝 搭档排行</div>
+    <div class="stats-header" id="partnerSortFilter" style="flex-wrap:wrap;">
+      <div class="stats-tab active" data-sort="rate">胜率排行</div>
+      <div class="stats-tab" data-sort="count">次数排行</div>
+    </div>
+    <div class="stats-header" id="partnerTypeFilter" style="flex-wrap:wrap;">
+      <div class="stats-tab active" data-filter="all">全部双打</div>
+      <div class="stats-tab" data-filter="双打">双打</div>
+      <div class="stats-tab" data-filter="男双">· 男双</div>
+      <div class="stats-tab" data-filter="混双">· 混双</div>
+      <div class="stats-tab" data-filter="女双">· 女双</div>
+      <div class="stats-tab" data-filter="团体赛">团体赛</div>
+      <div class="stats-tab" data-filter="无羽伦比">无羽伦比</div>
+    </div>
+    <div id="partnerList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏅 搭档总排行（综合）</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">所有双打组合按总场次排名</div>
+    <div id="totalPartnerRankList"></div>
+  </div>
+</div>
+
+<!-- ==================== 球员管理 ==================== -->
+<div class="page" id="page-players">
+  <div class="card">
+    <div class="card-title">➕ 添加球员</div>
+    <div class="form-row">
+      <input class="form-input" id="newPlayerName" placeholder="输入昵称" maxlength="10">
+      <select class="form-input" id="newPlayerGender" style="max-width:100px;">
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="addPlayer()">添加</button>
+    </div>
+  </div>
+  <div id="playerList"></div>
+</div>
+
+<!-- ==================== 审核管理 ==================== -->
+<div class="page" id="page-review">
+  <div class="card" style="border: 2px solid var(--warn); background: #FFFBEB;">
+    <div class="card-title">🔐 管理员模式 <span id="adminRoleTag" style="font-size:12px;font-weight:400;"></span></div>
+    <div id="adminReviewHint" style="font-size:13px;color:var(--text2);margin-bottom:10px;">以下比赛数据等待你的审核。审核通过后将显示在比赛记录和数据统计中。</div>
+    <button class="btn btn-danger btn-sm" onclick="adminLogout()">退出管理员</button>
+  </div>
+  <div id="reviewList"></div>
+</div>
+
+<!-- ==================== 球员选择弹窗 ==================== -->
+<div class="modal-overlay" id="playerPickerModal">
+  <div class="modal">
+    <h3>选择球员 <span id="pickerForLabel" style="color:var(--text2);font-weight:400;font-size:14px;"></span></h3>
+    <div id="pickerList"></div>
+    <div class="form-row" style="margin-top:12px;">
+      <button class="btn btn-outline btn-block" onclick="closePlayerPicker()">取消</button>
+      <button class="btn btn-primary btn-block" onclick="confirmPlayerPicker()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 管理员密码弹窗 ==================== -->
+<div class="modal-overlay center" id="adminModal">
+  <div class="modal center-modal">
+    <h3>🔐 管理员登录</h3>
+    <div class="admin-hint">请输入管理员密码</div>
+    <input type="password" class="pw-input" id="adminPwInput" placeholder="••••" maxlength="20">
+    <div class="pw-error" id="pwError" style="display:none;">密码错误，请重试</div>
+    <div class="form-row">
+      <button class="btn btn-outline btn-block" onclick="closeAdminModal()">取消</button>
+      <button class="btn btn-primary btn-block" onclick="submitAdminPw()">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 球员战绩详情弹窗 -->
+<div class="player-detail-overlay" id="playerDetailOverlay" onclick="if(event.target===this)closePlayerDetail()">
+  <div class="player-detail-modal" id="playerDetailModal"></div>
+</div>
+
+<script>
+// ==================== API 配置 ====================
+const ENV_ID = 'ymq-d1g1qdr0d4028ee0b';
+const API_BASE = 'https://' + ENV_ID + '.service.tcloudbase.com/ymq-api';
+
+// ==================== 管理员配置 ====================
+const ADMIN_PASSWORD_FULL = 'ymq2024';     // 全权限
+const ADMIN_PASSWORD_LIMITED = 'xqn@2026'; // 仅审核 + 加球员
+
+// ==================== API 状态 ====================
+let apiOnline = false;   // 云函数 API 是否可达
+let isOfflineMode = false;
+
+// 将中文等非 ASCII 字符转义为 \uXXXX，规避 CloudBase HTTP 触发器偶发的请求体 UTF-8 乱码问题
+function safeJsonStringify(obj) {
+  return JSON.stringify(obj).replace(/[\u0080-\uffff]/g, function(c) {
+    return '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0');
+  });
+}
+
+// ==================== 通用 fetch 封装 ====================
+async function apiFetch(path, options, timeoutMs = 15000) {
+  const url = API_BASE + '/' + path;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    let body = options && options.body;
+    if (body !== undefined) {
+      if (typeof body === 'object') {
+        body = safeJsonStringify(body);
+      } else if (typeof body === 'string') {
+        try { body = safeJsonStringify(JSON.parse(body)); } catch(e) {}
+      }
+    }
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+      body,
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // 检测 CloudBase 中间页（返回 HTML 而非 JSON）
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('text/html')) {
+      apiOnline = false;
+      throw new Error('CloudBase 域名已被拦截，请配置自定义域名');
+    }
+    const json = await res.json();
+    if (json.code !== 0) throw new Error(json.msg || 'API 错误');
+    return json.data;
+  } catch(e) {
+    if (e.name === 'AbortError') throw new Error('请求超时，请检查网络');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ==================== 初始化 ====================
+async function initApi() {
+  const skipBtn = document.getElementById('skipWaitBtn');
+  const showSkipBtn = setTimeout(() => {
+    if (skipBtn) skipBtn.style.display = '';
+  }, 3000);
+
+  try {
+    document.getElementById('loadingText').textContent = '正在连接云端 API...';
+    const data = await apiFetch('players');
+    state.players = data.map(doc => ({ ...doc, _id: doc._id, id: doc.id || doc._id }));
+    
+    document.getElementById('loadingText').textContent = '正在同步数据...';
+    const [matches, pending] = await Promise.all([
+      apiFetch('matches'),
+      apiFetch('pending')
+    ]);
+    // 按内容去重 — 防止云端历史重复记录在页面上显示两次(与小程序端一致)
+    state.matches = dedupeMatches(matches.map(doc => ({ ...doc, _id: doc._id })));
+    if (state.matches.length < matches.length) {
+      console.warn('[API] 云端存在重复记录, 已按内容指纹去重:', matches.length, '→', state.matches.length);
+    }
+    // Auto-fill subtypes for old matches that don't have teamASubType/teamBSubType
+    state.matches.forEach(m => {
+      if (!m.teamASubType) m.teamASubType = detectSideSubType(m.teamA);
+      if (!m.teamBSubType) m.teamBSubType = detectSideSubType(m.teamB);
+    });
+    state.pendingMatches = dedupeMatches(pending.map(doc => ({ ...doc, _id: doc._id })));
+
+    clearTimeout(showSkipBtn);
+    if (skipBtn) skipBtn.style.display = 'none';
+
+    apiOnline = true;
+    isOfflineMode = false;
+    document.getElementById('syncBadge').textContent = '☁️ 云端同步';
+    document.getElementById('syncBadge').className = 'sync-badge online';
+    document.getElementById('loadingOverlay').classList.add('hidden');
+
+    console.log('[API] 数据同步完成:', state.players.length, '球员,', state.matches.length, '比赛');
+    init();
+
+  } catch (err) {
+    clearTimeout(showSkipBtn);
+    if (skipBtn) skipBtn.style.display = 'none';
+    console.warn('[API] 连接失败，切换离线模式:', err.message);
+
+    document.getElementById('loadingText').textContent = '⚠️ ' + err.message;
+    setTimeout(() => fallbackToOffline(), 2000);
+  }
+}
+
+function fallbackToOffline() {
+  isOfflineMode = true;
+  apiOnline = false;
+  loadLocalFallbackData();
+  document.getElementById('syncBadge').textContent = '📴 离线模式';
+  document.getElementById('syncBadge').className = 'sync-badge offline';
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  init();
+}
+
+// ==================== 数据层 — fetch API 操作 ====================
+let state = { players: [], matches: [], pendingMatches: [] };
+
+// 球员 CRUD
+async function cloudAddPlayer(player) {
+  if (isOfflineMode || !apiOnline) {
+    return player; // addPlayer already pushed + saved
+  }
+  try {
+    const result = await apiFetch('players', { method: 'POST', body: JSON.stringify(player) });
+    player._id = result._id;
+    saveLocalFallback(); // update localStorage with _id
+  } catch(e) {
+    console.warn('cloudAddPlayer 云端失败:', e.message);
+    // addPlayer already pushed + saved, just leave the local copy
+  }
+  return player;
+}
+
+async function cloudRemovePlayer(id) {
+  if (isOfflineMode || !apiOnline) {
+    state.players = state.players.filter(p => p._id !== id);
+    saveLocalFallback();
+    return;
+  }
+  try {
+    await apiFetch('players/' + id, { method: 'DELETE' });
+  } catch(e) { console.warn('cloudRemovePlayer 云端失败:', e.message); }
+  state.players = state.players.filter(p => p._id !== id);
+  saveLocalFallback();
+}
+
+// 比赛 CRUD
+async function cloudAddMatch(match) {
+  if (isOfflineMode || !apiOnline) {
+    state.matches.unshift(match);
+    saveLocalFallback();
+    return match;
+  }
+  try {
+    const result = await apiFetch('matches', { method: 'POST', body: JSON.stringify(match) });
+    match._id = result._id;
+  } catch(e) {
+    console.warn('cloudAddMatch 云端失败:', e.message);
+    showToast('⚠️ 云端保存失败，已本地保存');
+  }
+  state.matches.unshift(match);
+  saveLocalFallback();
+  return match;
+}
+
+async function cloudUpdateMatch(match) {
+  if (isOfflineMode || !apiOnline) {
+    const idx = state.matches.findIndex(m => m._id === match._id);
+    if (idx >= 0) state.matches[idx] = match;
+    saveLocalFallback();
+    return;
+  }
+  try {
+    const { _id, ...data } = match;
+    await apiFetch('matches/' + _id, { method: 'PUT', body: JSON.stringify(data) });
+  } catch(e) { console.warn('cloudUpdateMatch 云端失败:', e.message); }
+  const idx = state.matches.findIndex(m => m._id === match._id);
+  if (idx >= 0) state.matches[idx] = match;
+  saveLocalFallback();
+}
+
+async function cloudDeleteMatch(id) {
+  if (isOfflineMode || !apiOnline) {
+    state.matches = state.matches.filter(m => m._id !== id);
+    saveLocalFallback();
+    return;
+  }
+  try { await apiFetch('matches/' + id, { method: 'DELETE' }); } catch(e) {}
+  state.matches = state.matches.filter(m => m._id !== id);
+  saveLocalFallback();
+}
+
+// 待审核 CRUD
+async function cloudAddPending(match) {
+  if (isOfflineMode || !apiOnline) {
+    state.matches.unshift(match);
+    saveLocalFallback();
+    return;
+  }
+  try {
+    const result = await apiFetch('pending', { method: 'POST', body: JSON.stringify(match) });
+    match._id = result._id;
+    state.pendingMatches.push(match);
+  } catch(e) {
+    console.warn('cloudAddPending 云端失败:', e.message);
+    state.pendingMatches.push(match);
+    saveLocalFallback();
+    showToast('⚠️ 提交未同步到云端，数据已本地保存');
+  }
+}
+
+async function cloudRemovePending(id) {
+  if (isOfflineMode || !apiOnline) {
+    state.pendingMatches = state.pendingMatches.filter(m => m._id !== id);
+    saveLocalFallback();
+    return;
+  }
+  try { await apiFetch('pending/' + id, { method: 'DELETE' }); } catch(e) {}
+  state.pendingMatches = state.pendingMatches.filter(m => m._id !== id);
+  saveLocalFallback();
+}
+
+// ==================== 离线模式 - localStorage 回退 ====================
+const LOCAL_KEY = 'ymq_badminton_data_v3';
+
+function loadLocalFallbackData() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      state.players = (d.players || []).map(p => ({ ...p, id: p.id || p._id }));
+      state.matches = d.matches || [];
+      // Auto-fill subtypes for old matches
+      state.matches.forEach(m => {
+        if (!m.teamASubType) m.teamASubType = detectSideSubType(m.teamA);
+        if (!m.teamBSubType) m.teamBSubType = detectSideSubType(m.teamB);
+      });
+      state.pendingMatches = d.pendingMatches || [];
+    }
+  } catch(e) {
+    state = { players: [], matches: [], pendingMatches: [] };
+  }
+}
+
+function saveLocalFallback() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+}
+
+// ==================== 兼容层 - 统一数据保存接口 ====================
+// 原代码中的 saveData() 调用统一替换
+function saveData() {
+  if (isOfflineMode) {
+    saveLocalFallback();
+  }
+  // 云端模式下每次操作都是即时写入，无需额外保存
+}
+
+// ==================== 公共辅助函数 ====================
+function getRefereeName(referee) {
+  if (!referee) return '';
+  const player = state.players.find(p => p._id === referee || p.id === referee);
+  if (player) return player.name;
+  return referee;
+}
+
+function getPlayerName(id) {
+  if (!id) return '';
+  const player = state.players.find(p => p._id === id || p.id === id);
+  return player ? player.name : id;
+}
+
+// ==================== Match types meta ====================
+const TYPE_META = {
+  '双打':    { cls: 'db',  isSingle: false, isDoubles: true,  isTeam: false },
+  '单打':    { cls: 'sn',  isSingle: true,  isDoubles: false, isTeam: false },
+  '团体赛':  { cls: 'team',isSingle: false, isDoubles: false, isTeam: true  },
+  '无羽伦比':{ cls: 'wylb',isSingle: false, isDoubles: false, isTeam: true  },
+};
+
+const TYPE_HINTS = {
+  '双打':    '双打：每方各选 2 名球员，系统自动判断男双/混双/女双',
+  '单打':    '单打：每方各选 1 名球员，系统自动判断男单/女单',
+  '团体赛':  '团体赛：每方可选 2-6 名球员，整体出赛',
+  '无羽伦比':'无羽伦比：每方可选 2-6 名球员，趣味大乱斗',
+};
+
+// ==================== Current Match State ====================
+let currentMatch = {
+  type: '双打', gamePoints: 21, customPoints: 21,
+  teamA: [], teamB: [], games: [], teamASubType: '', teamBSubType: ''
+};
+let pickerTeam = null;
+let pickerSelected = [];
+let isAdmin = '';  // '' | 'full' | 'limited'
+let currentVenue = 'all';  // 场地筛选
+
+// ==================== Admin ====================
+function toggleAdmin() {
+  if (isAdmin) {
+    if (confirm('退出管理员模式？')) adminLogout();
+  } else {
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('adminModal').classList.add('show');
+    setTimeout(() => document.getElementById('adminPwInput').focus(), 200);
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('adminModal').classList.remove('show');
+}
+
+function submitAdminPw() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (pw === ADMIN_PASSWORD_FULL) {
+    isAdmin = 'full';
+    closeAdminModal();
+    updateAdminUI();
+    showToast('✅ 已进入管理员模式（全权限）');
+    switchTab('review');
+  } else if (pw === ADMIN_PASSWORD_LIMITED) {
+    isAdmin = 'limited';
+    closeAdminModal();
+    updateAdminUI();
+    showToast('✅ 已进入管理员模式（审核+球员管理）');
+    switchTab('review');
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('adminPwInput').focus();
+  }
+}
+
+function adminLogout() {
+  isAdmin = '';
+  updateAdminUI();
+  switchTab('record');
+  showToast('已退出管理员模式');
+}
+
+function updateAdminUI() {
+  const badge = document.getElementById('adminBadge');
+  const icon = document.getElementById('adminBadgeIcon');
+  const text = document.getElementById('adminBadgeText');
+  const reviewBtn = document.getElementById('reviewTabBtn');
+
+  if (isAdmin) {
+    badge.classList.add('is-admin');
+    icon.textContent = isAdmin === 'full' ? '👑' : '⭐';
+    text.textContent = isAdmin === 'full' ? '管理员 · 全权限' : '管理员 · 审核';
+    reviewBtn.style.display = '';
+    const cnt = state.pendingMatches.length;
+    reviewBtn.innerHTML = '审核管理' + (cnt > 0 ? '<span class="badge-dot"></span>' : '');
+  } else {
+    badge.classList.remove('is-admin');
+    icon.textContent = '🔒';
+    text.textContent = '管理员';
+    reviewBtn.style.display = 'none';
+    if (document.getElementById('page-review').classList.contains('active')) switchTab('record');
+  }
+  updatePendingBanner();
+  // 更新审核页角色标签
+  const roleTag = document.getElementById('adminRoleTag');
+  const reviewHint = document.getElementById('adminReviewHint');
+  if (roleTag && reviewHint) {
+    if (isAdmin === 'full') {
+      roleTag.textContent = '（全权限）';
+      roleTag.style.color = 'var(--primary)';
+      reviewHint.textContent = '以下比赛数据等待审核。你拥有全部管理权限（审核、增删球员、删比赛、改比分）。';
+    } else if (isAdmin === 'limited') {
+      roleTag.textContent = '（审核 + 球员管理）';
+      roleTag.style.color = 'var(--warn)';
+      reviewHint.textContent = '以下比赛数据等待审核。你仅可审核通过比赛和添加球员，无删除/修改权限。';
+    }
+  }
+}
+
+function updatePendingBanner() {
+  const cnt = state.pendingMatches.length;
+  const banner = document.getElementById('pendingBanner');
+  if (cnt > 0 && !isAdmin) {
+    banner.style.display = 'flex';
+    document.getElementById('pendingCount').textContent = cnt;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ==================== Init ====================
+function init() {
+  // 比赛时间默认为当前时间
+  document.getElementById('matchTime').value = getNowDateTimeLocal();
+
+  document.getElementById('matchTypeGroup').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#matchTypeGroup .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentMatch.type = chip.dataset.type;
+    autoAdjustTeams();
+    updateTypeHint();
+    updateTeamLabels();
+  });
+
+  document.getElementById('gamePointsGroup').addEventListener('click', (e) => {
+    const opt = e.target.closest('.game-point-opt');
+    if (!opt) return;
+    document.querySelectorAll('#gamePointsGroup .game-point-opt').forEach(c => c.classList.remove('active'));
+    opt.classList.add('active');
+    if (opt.dataset.points === 'custom') {
+      document.getElementById('customPointsRow').classList.add('show');
+      currentMatch.gamePoints = parseInt(document.getElementById('customPointsInput').value) || 21;
+    } else {
+      document.getElementById('customPointsRow').classList.remove('show');
+      currentMatch.gamePoints = parseInt(opt.dataset.points);
+    }
+  });
+
+  document.getElementById('customPointsInput').addEventListener('input', (e) => {
+    const v = parseInt(e.target.value);
+    if (v >= 5 && v <= 99) currentMatch.gamePoints = v;
+  });
+
+  document.getElementById('adminPwInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitAdminPw();
+  });
+
+  setupFilterTabs('historyFilter', renderHistory);
+  setupFilterTabs('statsFilter', (f) => { renderRank(f); });
+  setupFilterTabs('partnerTypeFilter', (f) => { renderPartners(f); });
+
+  // 场地筛选（内容动态生成，用事件委托）
+  document.getElementById('venueFilter').addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-venue]');
+    if (!tab) return;
+    currentVenue = tab.dataset.venue;
+    renderStats();
+  });
+
+  // 搭档排序 tab（胜率/次数）
+  document.getElementById('partnerSortFilter').addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-sort]');
+    if (!tab) return;
+    document.querySelectorAll('#partnerSortFilter [data-sort]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderPartners(getActiveFilter('partnerTypeFilter'));
+  });
+
+  document.getElementById('newPlayerName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addPlayer();
+  });
+
+  updateAdminUI();
+  updateCurrentRefereeDropdown();
+  renderAll();
+}
+
+function autoAdjustTeams() {
+  const meta = TYPE_META[currentMatch.type] || {};
+  if (meta.isSingle) {
+    if (currentMatch.teamA.length > 1) currentMatch.teamA = [currentMatch.teamA[0]];
+    if (currentMatch.teamB.length > 1) currentMatch.teamB = [currentMatch.teamB[0]];
+  }
+  updateTeamDisplay();
+  autoDetectSubType();
+}
+
+function updateTypeHint() {
+  const hint = document.getElementById('typeHint');
+  const msg = TYPE_HINTS[currentMatch.type];
+  if (msg) {
+    hint.textContent = '💡 ' + msg;
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function updateTeamLabels() {
+  const meta = TYPE_META[currentMatch.type] || {};
+  document.getElementById('teamALabel').textContent = meta.isTeam ? '队伍A' : 'A方';
+  document.getElementById('teamBLabel').textContent = meta.isTeam ? '队伍B' : 'B方';
+}
+
+function detectSideSubType(playerIds) {
+  function toId(item) {
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') return item._id || item.id || null;
+    return null;
+  }
+  const players = playerIds.map(toId).filter(Boolean).map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean);
+  if (players.length === 0) return '';
+  const hasMale = players.some(p => p.gender === '男');
+  const hasFemale = players.some(p => p.gender === '女');
+  if (players.length >= 2) {
+    if (hasMale && hasFemale) return '混双';
+    if (hasMale) return '男双';
+    if (hasFemale) return '女双';
+  }
+  if (players.length === 1) {
+    return hasMale ? '男单' : '女单';
+  }
+  return '';
+}
+
+function autoDetectSubType() {
+  const meta = TYPE_META[currentMatch.type] || {};
+  if (meta.isDoubles || meta.isSingle) {
+    currentMatch.teamASubType = detectSideSubType(currentMatch.teamA);
+    currentMatch.teamBSubType = detectSideSubType(currentMatch.teamB);
+  } else {
+    currentMatch.teamASubType = '';
+    currentMatch.teamBSubType = '';
+  }
+}
+
+// ==================== Tab Navigation ====================
+function switchTab(name) {
+  if (name === 'review' && !isAdmin) { toggleAdmin(); return; }
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const label = btn.textContent.trim().replace(/[🔴⚫]/g, '').trim();
+    btn.classList.toggle('active', btn.id === 'reviewTabBtn' ? name === 'review' : label === getTabLabel(name));
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'history') renderHistory();
+  if (name === 'stats') renderStats();
+  if (name === 'players') renderPlayers();
+  if (name === 'review') renderReview();
+}
+
+function getTabLabel(name) {
+  const map = { record: '记录比赛', history: '比赛记录', stats: '数据统计', players: '球员管理' };
+  return map[name] || name;
+}
+
+function setupFilterTabs(groupId, cb) {
+  document.getElementById(groupId).addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-filter]');
+    if (!tab) return;
+    document.querySelectorAll('#' + groupId + ' [data-filter]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    cb(tab.dataset.filter);
+  });
+}
+
+function getActiveFilter(groupId) {
+  const active = document.querySelector('#' + groupId + ' .active[data-filter]');
+  return active ? active.dataset.filter : 'all';
+}
+
+function getActiveSort(groupId) {
+  const active = document.querySelector('#' + groupId + ' .active[data-sort]');
+  return active ? active.dataset.sort : 'rate';
+}
+
+// ==================== Player Management ====================
+function addPlayer() {
+  try {
+    if (!isAdmin) { showToast('🔒 需要管理员权限才能添加球员'); return; }
+    if (!state || !Array.isArray(state.players)) { showToast('⚠️ 数据未初始化，请刷新页面'); return; }
+
+    const nameInput = document.getElementById('newPlayerName');
+    const genderSelect = document.getElementById('newPlayerGender');
+    if (!nameInput || !genderSelect) { showToast('⚠️ 页面元素丢失，请刷新'); return; }
+
+    const name = (nameInput.value || '').trim();
+    if (!name) { showToast('请输入昵称'); return; }
+    if (name.length > 10) { showToast('昵称最多10个字符'); return; }
+    if (state.players.some(p => p.name === name)) { showToast('该昵称已存在'); return; }
+
+    const player = { id: genId(), name, gender: genderSelect.value || '男', createdAt: Date.now() };
+
+    // 离线模式：直接写入 state + localStorage
+    if (isOfflineMode || !apiOnline) {
+      state.players.push(player);
+      saveLocalFallback();
+    } else {
+      // 云端模式：异步写入（忽略 async，fire-and-forget 也可；这里用同步离线兜底）
+      state.players.push(player);
+      saveLocalFallback();
+      // 尝试云端同步（不阻塞 UI）
+      cloudAddPlayer(player).catch(e => console.warn('云端同步失败，已保存本地:', e.message));
+    }
+
+    nameInput.value = '';
+    renderPlayers();
+    showToast('✅ 已添加 ' + name);
+  } catch (err) {
+    console.error('addPlayer error:', err);
+    showToast('❌ 添加失败: ' + (err.message || '未知错误'));
+  }
+}
+
+async function cloudUpdatePlayer(id, data) {
+  if (isOfflineMode || !apiOnline) {
+    const p = state.players.find(p => p._id === id || p.id === id);
+    if (p) { if (data.name) p.name = data.name; if (data.gender) p.gender = data.gender; }
+    saveLocalFallback();
+    return;
+  }
+  try {
+    await apiFetch('players/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  } catch(e) { console.warn('cloudUpdatePlayer 云端失败:', e.message); }
+  const p = state.players.find(p => p._id === id || p.id === id);
+  if (p) { if (data.name) p.name = data.name; if (data.gender) p.gender = data.gender; }
+  saveLocalFallback();
+}
+
+function editPlayer(id) {
+  if (isAdmin !== 'full') return showToast('🔒 仅全权限管理员可修改球员');
+  const p = state.players.find(p => p._id === id || p.id === id);
+  if (!p) return showToast('未找到该球员');
+  const newName = prompt('修改昵称：', p.name);
+  if (newName === null) return;
+  const name = newName.trim();
+  if (!name) return showToast('昵称不能为空');
+  if (name.length > 10) return showToast('昵称最多10个字符');
+  if (name !== p.name && state.players.some(x => x.name === name)) return showToast('该昵称已存在');
+  const gender = confirm(p.gender === '男' ? '点「确定」保持♂️男，点「取消」改为♀️女' : '点「确定」保持♀️女，点「取消」改为♂️男') ? p.gender : (p.gender === '男' ? '女' : '男');
+  cloudUpdatePlayer(p._id || p.id, { name, gender }).then(() => {
+    renderPlayers();
+    showToast('✅ 已修改为 ' + name);
+  });
+}
+
+async function removePlayer(id) {
+  if (isAdmin !== 'full') return showToast('🔒 仅全权限管理员可删除球员');
+  const inMatch = state.matches.some(m => m.teamA.includes(id) || m.teamB.includes(id));
+  if (inMatch) return showToast('该球员有比赛记录，无法删除');
+  await cloudRemovePlayer(id);
+  renderPlayers();
+  showToast('已删除');
+}
+
+function renderPlayers() {
+  const container = document.getElementById('playerList');
+  if (state.players.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🏸</div><p>还没有球员，管理员可以添加</p></div>';
+    return;
+  }
+  container.innerHTML = state.players.map(p => {
+    const genderIcon = p.gender === '男' ? '♂️' : '♀️';
+    const matches = state.matches.filter(m =>
+      m.teamA.includes(p._id) || m.teamB.includes(p._id) ||
+      m.teamA.includes(p.id) || m.teamB.includes(p.id)
+    ).length;
+    return `
+      <div class="card" style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openPlayerDetail('${p._id || p.id}')">
+        <div style="font-size:24px;">${genderIcon}</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:600;">${esc(p.name)}</div>
+          <div style="font-size:12px;color:var(--text3);">参赛 ${matches} 场 · 点击查看战绩</div>
+        </div>
+        ${isAdmin === 'full' ? `<button class="btn btn-sm" style="background:var(--primary);color:#fff;margin-right:6px;" onclick="event.stopPropagation();editPlayer('${p._id || p.id}')">编辑</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();removePlayer('${p._id || p.id}')">删除</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ==================== Player Picker ====================
+function openPlayerPicker(team) {
+  pickerTeam = team;
+  pickerSelected = [...(team === 'A' ? currentMatch.teamA : currentMatch.teamB)];
+  const meta = TYPE_META[currentMatch.type] || {};
+  let maxPick, hint;
+  if (meta.isSingle) { maxPick = 1; hint = '单打，选1人'; }
+  else if (meta.isDoubles) { maxPick = 2; hint = '双打，选2人'; }
+  else { maxPick = 6; hint = '团体，可选1~6人'; }
+
+  document.getElementById('pickerForLabel').textContent = `(${team === 'A' ? 'A队' : 'B队'}，${hint})`;
+
+  const list = document.getElementById('pickerList');
+  if (state.players.length === 0) {
+    list.innerHTML = '<div class="empty-state"><p>还没有球员，管理员需先添加</p></div>';
+  } else {
+    list.innerHTML = '<div class="chip-group">' + state.players.map(p => {
+      const sel = pickerSelected.includes(p.id);
+      return `<div class="player-tag ${sel ? 'selected' : ''}" data-id="${p.id}" onclick="togglePicker('${p.id}',${maxPick})">${esc(p.name)}</div>`;
+    }).join('') + '</div>';
+  }
+  document.getElementById('playerPickerModal').classList.add('show');
+}
+
+function togglePicker(id, max) {
+  const idx = pickerSelected.indexOf(id);
+  if (idx >= 0) {
+    pickerSelected.splice(idx, 1);
+  } else if (pickerSelected.length < max) {
+    pickerSelected.push(id);
+  } else {
+    return showToast('最多选' + max + '人');
+  }
+  document.querySelectorAll('#pickerList .player-tag').forEach(tag => {
+    tag.classList.toggle('selected', pickerSelected.includes(tag.dataset.id));
+  });
+}
+
+function confirmPlayerPicker() {
+  if (pickerTeam === 'A') currentMatch.teamA = pickerSelected;
+  else currentMatch.teamB = pickerSelected;
+  autoDetectSubType();
+  updateTeamDisplay();
+  closePlayerPicker();
+}
+
+function closePlayerPicker() {
+  document.getElementById('playerPickerModal').classList.remove('show');
+}
+
+function updateTeamDisplay() {
+  ['A', 'B'].forEach(side => {
+    const players = side === 'A' ? currentMatch.teamA : currentMatch.teamB;
+    const el = document.getElementById('team' + side + 'Players');
+    if (players.length === 0) {
+      el.innerHTML = '<span style="color:var(--text3);font-size:13px;">未选择球员</span>';
+    } else {
+      el.innerHTML = players.map(id => {
+        const p = state.players.find(pl => pl.id === id);
+        return p ? `<span style="display:inline-block;padding:4px 10px;background:${side==='A'?'var(--primary-light)':'var(--info-light)'};color:${side==='A'?'var(--primary-dark)':'var(--info)'};border-radius:12px;font-size:13px;font-weight:600;margin:2px;">${esc(p.name)}</span>` : '';
+      }).join('');
+    }
+    const subType = side === 'A' ? currentMatch.teamASubType : currentMatch.teamBSubType;
+    const tipEl = document.getElementById('team' + side + 'SubType');
+    if (tipEl) {
+      tipEl.textContent = subType ? '（' + subType + '）' : '';
+    }
+  });
+  updateServeReceiveDropdowns();
+  const gc = document.getElementById('gamesCard');
+  if (gc && currentMatch.teamA.length > 0 && currentMatch.teamB.length > 0) {
+    gc.style.display = 'block';
+  }
+}
+
+function updateServeReceiveDropdowns() {
+  const meta = TYPE_META[currentMatch.type] || {};
+  const area = document.getElementById('serveReceiveArea');
+  if (meta.isDoubles && currentMatch.teamA.length === 2 && currentMatch.teamB.length === 2) {
+    area.style.display = 'block';
+    const serverSelect = document.getElementById('serverSelect');
+    const currentServer = serverSelect.value;
+    serverSelect.innerHTML = '<option value="">（不设置）</option>';
+    currentMatch.teamA.forEach(id => {
+      const p = state.players.find(pl => pl.id === id);
+      if (p) serverSelect.innerHTML += '<option value="' + p.id + '">' + esc(p.name) + '</option>';
+    });
+    serverSelect.value = currentServer || '';
+    const receiverSelect = document.getElementById('receiverSelect');
+    const currentReceiver = receiverSelect.value;
+    receiverSelect.innerHTML = '<option value="">（不设置）</option>';
+    currentMatch.teamB.forEach(id => {
+      const p = state.players.find(pl => pl.id === id);
+      if (p) receiverSelect.innerHTML += '<option value="' + p.id + '">' + esc(p.name) + '</option>';
+    });
+    receiverSelect.value = currentReceiver || '';
+  } else {
+    area.style.display = 'none';
+  }
+}
+
+function updateCurrentRefereeDropdown() {
+  const sel = document.getElementById('currentReferee');
+  if (!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">（无裁判）</option>';
+  state.players.forEach(p => {
+    sel.innerHTML += '<option value="' + p.id + '">' + esc(p.name) + '</option>';
+  });
+  sel.innerHTML += '<option value="__manual__">✏️ 其他（手动输入）</option>';
+  if (currentVal === '__manual__') {
+    sel.value = '__manual__';
+    document.getElementById('currentRefereeManual').style.display = 'block';
+  } else if (currentVal) {
+    sel.value = currentVal;
+  }
+}
+
+function onRefereeChange() {
+  const sel = document.getElementById('currentReferee');
+  const manualInput = document.getElementById('currentRefereeManual');
+  if (!sel || !manualInput) return;
+  if (sel.value === '__manual__') {
+    manualInput.style.display = 'block';
+    manualInput.focus();
+  } else {
+    manualInput.style.display = 'none';
+    manualInput.value = '';
+  }
+}
+
+// ==================== Game Recording ====================
+function addGame() {
+  const sA = parseInt(document.getElementById('scoreAInput').value) || 0;
+  const sB = parseInt(document.getElementById('scoreBInput').value) || 0;
+  if (sA === 0 && sB === 0) return showToast('比分不能都是0');
+  const server  = document.getElementById('serverSelect') ? document.getElementById('serverSelect').value : '';
+  const receiver = document.getElementById('receiverSelect') ? document.getElementById('receiverSelect').value : '';
+  let referee = '';
+  const refSel = document.getElementById('currentReferee');
+  const refManual = document.getElementById('currentRefereeManual');
+  if (refManual && refManual.style.display === 'block' && refManual.value.trim()) {
+    referee = refManual.value.trim();
+  } else if (refSel) {
+    referee = refSel.value;
+  }
+  currentMatch.games.push({ a: sA, b: sB, server, receiver, referee });
+  document.getElementById('scoreAInput').value = 0;
+  document.getElementById('scoreBInput').value = 0;
+  if (refSel) refSel.value = '';
+  if (refManual) { refManual.value = ''; refManual.style.display = 'none'; }
+  document.getElementById('gamesCard').style.display = 'block';
+  renderGames();
+}
+
+function removeGame(idx) {
+  currentMatch.games.splice(idx, 1);
+  renderGames();
+  if (currentMatch.games.length === 0) document.getElementById('gamesCard').style.display = 'none';
+}
+
+function renderGames() {
+  const list = document.getElementById('gamesList');
+  if (!list) return;
+  let winsA = 0, winsB = 0;
+  list.innerHTML = currentMatch.games.map((g, i) => {
+    if (g.a > g.b) winsA++; else winsB++;
+    const serverName = g.server ? getPlayerName(g.server) : '';
+    const receiverName = g.receiver ? getPlayerName(g.receiver) : '';
+    const refName = getRefereeName(g.referee);
+    const sv = serverName ? '<span style="font-size:11px;color:var(--primary);margin-left:4px;">发:' + esc(serverName) + '</span>' : '';
+    const rc = receiverName ? '<span style="font-size:11px;color:var(--info);margin-left:4px;">接:' + esc(receiverName) + '</span>' : '';
+    const rf = refName ? '<span style="font-size:11px;color:var(--text3);margin-left:4px;">裁:' + esc(refName) + '</span>' : '';
+    return `
+      <div class="stat-row" style="align-items:center;flex-wrap:wrap;gap:4px;">
+        <div class="stat-info" style="min-width:36px;">第${i + 1}局</div>
+        <input type="number" value="${g.a}" min="0" max="99" data-game="${i}" data-side="a"
+          style="width:48px;text-align:center;font-size:16px;font-weight:700;padding:2px 4px;border-radius:6px;border:1px solid var(--border);"
+          onchange="editGameScore(${i},'a',this.value)">
+        <div style="color:var(--text3);font-size:14px;">:</div>
+        <input type="number" value="${g.b}" min="0" max="99" data-game="${i}" data-side="b"
+          style="width:48px;text-align:center;font-size:16px;font-weight:700;padding:2px 4px;border-radius:6px;border:1px solid var(--border);"
+          onchange="editGameScore(${i},'b',this.value)">
+        ${sv}${rc}${rf}
+        <button class="btn btn-sm" style="padding:2px 6px;font-size:11px;" onclick="promptEditGame(${i})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="removeGame(${i})" style="padding:2px 6px;font-size:11px;">×</button>
+      </div>`;
+  }).join('');
+  if (currentMatch.games.length > 0) {
+    list.innerHTML += `
+      <div class="stat-row" style="border-bottom:none;font-weight:700;">
+        <div class="stat-info">局数</div>
+        <div class="stat-value" style="color:var(--primary);">${winsA} 胜</div>
+        <div style="color:var(--text3);">-</div>
+        <div class="stat-value" style="color:var(--info);">${winsB} 胜</div>
+        <div style="width:24px;"></div>
+      </div>`;
+  }
+}
+
+function editGameScore(idx, side, val) {
+  const v = parseInt(val) || 0;
+  if (v < 0) return;
+  currentMatch.games[idx][side] = v;
+  renderGames();
+}
+
+function promptEditGame(idx) {
+  const g = currentMatch.games[idx];
+  const sa = prompt('修改第' + (idx+1) + '局 A方比分（当前：' + g.a + '）', g.a);
+  if (sa === null) return;
+  const sb = prompt('修改第' + (idx+1) + '局 B方比分（当前：' + g.b + '）', g.b);
+  if (sb === null) return;
+  const na = parseInt(sa) || 0, nb = parseInt(sb) || 0;
+  if (na < 0 || nb < 0) return showToast('比分不能为负');
+  const curRef = getRefereeName(g.referee);
+  const refInput = prompt('裁判员（直接输入姓名，留空则无裁判）', curRef || '');
+  currentMatch.games[idx] = { ...g, a: na, b: nb, referee: (refInput || '').trim() };
+  renderGames();
+  showToast('✅ 已更新第' + (idx+1) + '局');
+}
+
+// 返回当前时间的 datetime-local 格式字符串（yyyy-MM-ddTHH:mm）
+function getNowDateTimeLocal() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate())
+    + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+}
+
+// ==================== Save Match ====================
+let _saveLock = false; // 防重复点击锁
+
+// 内容指纹 — 识别"同一场比赛被录入多次但生成了不同 id"的情况
+// 组成: 类型 + 双方球员(排序) + 比赛时间 + 每局比分
+function contentFingerprint(m) {
+  if (!m || !m.type) return '';
+  const a = (m.teamA || []).slice().sort().join(',');
+  const b = (m.teamB || []).slice().sort().join(',');
+  const g = (m.games || []).map(x => x.a + '-' + x.b).join(';');
+  return m.type + '|' + a + '|' + b + '|' + (m.matchTime || 0) + '|' + g;
+}
+
+// 归一化时间戳 — 兼容数字(ms)与 ISO 字符串
+function tsOf(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string' && v) { const t = Date.parse(v); return isNaN(t) ? 0 : t; }
+  return 0;
+}
+
+// 按 业务id + 内容指纹(含录入时间邻近) 双重去重 —— 与小程序端规则保持一致
+// 时间邻近约束不可省: 否则"另一场恰好比分完全相同"的记录会被隐藏
+function dedupeMatches(list) {
+  const seen = {}, fpMap = {}, out = [];
+  for (const item of list) {
+    const key = item.id || item._id;
+    if (key) { if (seen[key]) continue; seen[key] = true; }
+    const fp = contentFingerprint(item);
+    if (fp) {
+      const kept = fpMap[fp];
+      if (kept) {
+        let dup = false;
+        for (const k of kept) {
+          const t1 = tsOf(item.createdAt), t2 = tsOf(k.createdAt);
+          if (t1 && t2 && Math.abs(t1 - t2) <= 30 * 60 * 1000) { dup = true; break; }
+        }
+        if (dup) continue;
+        kept.push(item);
+      } else {
+        fpMap[fp] = [item];
+      }
+    }
+    out.push(item);
+  }
+  return out;
+}
+
+// 检测重复比赛 — 返回 '' 无重复 | 'warn' 疑似重复(需确认) | 'block' 几乎肯定是重复提交(直接拦)
+// 比对维度: 类型 + 双方球员 + 每局比分
+function duplicateLevel(match) {
+  const allExisting = (state.matches || []).concat(state.pendingMatches || []);
+  const now = Date.now();
+  const LEVEL = { '': 0, warn: 1, block: 2 };
+  let worst = '';
+  for (const m of allExisting) {
+    if (m.type !== match.type) continue;
+    const a1 = (m.teamA || []).slice().sort().join(',');
+    const a2 = (match.teamA || []).slice().sort().join(',');
+    const b1 = (m.teamB || []).slice().sort().join(',');
+    const b2 = (match.teamB || []).slice().sort().join(',');
+    if (a1 !== a2 || b1 !== b2) continue;
+    const g1 = m.games || [], g2 = match.games || [];
+    if (g1.length !== g2.length) continue;
+    let sameScores = true;
+    for (let j = 0; j < g1.length; j++) {
+      if (g1[j].a !== g2[j].a || g1[j].b !== g2[j].b) { sameScores = false; break; }
+    }
+    if (!sameScores) continue;
+
+    const timeClose = Math.abs((m.matchTime || 0) - (match.matchTime || 0)) <= 60000;
+    const mc = tsOf(m.createdAt);
+    const createdDelta = mc ? Math.abs(now - mc) : Infinity;
+
+    let level = '';
+    if (timeClose && createdDelta <= 10 * 60 * 1000) level = 'block';
+    else if (createdDelta <= 15 * 60 * 1000) level = 'warn';
+    else if (timeClose) level = 'warn';
+    if (!level) continue;
+    if (LEVEL[level] > LEVEL[worst]) worst = level;
+    if (worst === 'block') break;
+  }
+  return worst;
+}
+
+async function saveMatch() {
+  if (_saveLock) { showToast('正在提交中，请勿重复操作'); return; }
+
+  if (currentMatch.teamA.length === 0 || currentMatch.teamB.length === 0) return showToast('请选择双方球员');
+
+  const meta = TYPE_META[currentMatch.type] || {};
+  if (meta.isSingle) {
+    if (currentMatch.teamA.length !== 1 || currentMatch.teamB.length !== 1) return showToast('单打比赛每方只能选1人');
+  } else if (meta.isDoubles) {
+    if (currentMatch.teamA.length !== 2 || currentMatch.teamB.length !== 2) return showToast('双打比赛每方需要选2人');
+  } else if (meta.isTeam) {
+    if (currentMatch.teamA.length < 1 || currentMatch.teamB.length < 1) return showToast('请选择参赛球员');
+  }
+
+  if (currentMatch.games.length === 0) return showToast('请先记录至少一局比赛');
+
+  let winsA = 0, winsB = 0;
+  currentMatch.games.forEach(g => { if (g.a > g.b) winsA++; else winsB++; });
+  const winner = winsA > winsB ? 'A' : 'B';
+
+  const submitter = '匿名';
+  const matchTimeInput = document.getElementById('matchTime').value;
+  const matchTime = matchTimeInput ? new Date(matchTimeInput).getTime() : Date.now();
+  const location = document.getElementById('matchLocation').value.trim();
+
+  const matchData = {
+    id: genId(),
+    type: currentMatch.type,
+    teamASubType: currentMatch.teamASubType || '',
+    teamBSubType: currentMatch.teamBSubType || '',
+    gamePoints: currentMatch.gamePoints,
+    teamA: [...currentMatch.teamA],
+    teamB: [...currentMatch.teamB],
+    games: [...currentMatch.games],
+    winner, winsA, winsB,
+    submitter,
+    location,
+    matchTime,
+    createdAt: Date.now()
+  };
+
+  // 检测重复(两级: block 直接拦 / warn 让用户确认, 避免误拦真实比赛)
+  const dupLevel = duplicateLevel(matchData);
+  if (dupLevel === 'block') {
+    showToast('⚠️ 该比赛刚刚已录入，请勿重复提交');
+    return;
+  }
+  if (dupLevel === 'warn' && !confirm('15 分钟内已录入过一场完全相同的比赛。确定要再录一次吗？')) {
+    return;
+  }
+
+  _saveLock = true;
+
+  try {
+    if (isAdmin === 'full' || isOfflineMode) {
+      // 全权限管理员/离线模式直接入库
+      await cloudAddMatch(matchData);
+      renderAll();
+      showToast('✅ 比赛已直接保存！');
+      resetCurrent();
+    } else {
+      // 普通用户进入待审核队列
+      await cloudAddPending(matchData);
+      updatePendingBanner();
+      if (isAdmin) renderReview();
+      showToast('📤 已提交，等待管理员审核后显示');
+      resetCurrent();
+    }
+  } catch(e) {
+    // API 失败时自动降级到本地保存
+    console.warn('saveMatch 提交失败，降级到本地保存:', e.message);
+    if (!apiOnline) isOfflineMode = true;
+    state.matches.unshift(matchData);
+    saveLocalFallback();
+    renderAll();
+    showToast('⚠️ 云端同步失败，已本地保存：' + e.message);
+    resetCurrent();
+  } finally {
+    _saveLock = false;
+  }
+}
+
+function resetCurrent() {
+  currentMatch = { type: '双打', gamePoints: 21, customPoints: 21, teamA: [], teamB: [], games: [], teamASubType: '', teamBSubType: '' };
+  document.querySelectorAll('#matchTypeGroup .chip').forEach(c => c.classList.toggle('active', c.dataset.type === '双打'));
+  document.querySelectorAll('#gamePointsGroup .game-point-opt').forEach(c => c.classList.toggle('active', c.dataset.points === '21'));
+  document.getElementById('customPointsRow').classList.remove('show');
+  document.getElementById('gamesCard').style.display = 'none';
+  document.getElementById('typeHint').style.display = 'none';
+  document.getElementById('teamALabel').textContent = 'A方';
+  document.getElementById('teamBLabel').textContent = 'B方';
+  document.getElementById('teamASubType').textContent = '';
+  document.getElementById('teamBSubType').textContent = '';
+  document.getElementById('matchTime').value = getNowDateTimeLocal();
+  document.getElementById('matchLocation').value = '';
+  document.getElementById('scoreAInput').value = 0;
+  document.getElementById('scoreBInput').value = 0;
+  const cf = document.getElementById('currentReferee');
+  if (cf) cf.value = '';
+  const gl = document.getElementById('gamesList');
+  if (gl) gl.innerHTML = '';
+  updateTeamDisplay();
+}
+
+// ==================== History ====================
+function renderHistory() {
+  const filter = getActiveFilter('historyFilter');
+  const list = document.getElementById('historyList');
+  let matches = [...state.matches];
+  if (filter !== 'all') {
+    const subTypes = ['男双','混双','女双','男单','女单'];
+    if (subTypes.includes(filter)) {
+      matches = matches.filter(m =>
+        m.teamASubType === filter || m.teamBSubType === filter ||
+        (!m.teamASubType && !m.teamBSubType && m.type === filter)
+      );
+    } else {
+      matches = matches.filter(m => m.type === filter);
+    }
+  }
+  if (matches.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🏸</div><p>暂无比赛记录</p></div>';
+    return;
+  }
+  list.innerHTML = matches.map(m => renderMatchItem(m, true)).join('');
+}
+
+function renderMatchItem(m, showDelete) {
+  const pA = m.teamA.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+  const pB = m.teamB.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+  const meta = TYPE_META[m.type] || {};
+  const typeClass = meta.cls || '';
+  const time = m.matchTime ? formatDate(m.matchTime) : formatDate(m.createdAt);
+  const subA = m.teamASubType ? '（' + m.teamASubType + '）' : '';
+  const subB = m.teamBSubType ? '（' + m.teamBSubType + '）' : '';
+  const gamesDisplay = isAdmin === 'full'
+    ? m.games.map((g, i) => {
+        const serverStr = g.server ? '<span style="font-size:10px;color:var(--primary);"> 发:' + esc(getPlayerName(g.server)) + '</span>' : '';
+        const receiverStr = g.receiver ? '<span style="font-size:10px;color:var(--info);"> 接:' + esc(getPlayerName(g.receiver)) + '</span>' : '';
+        const refStr = g.referee ? '<span style="font-size:10px;color:var(--text3);"> 裁:' + esc(getRefereeName(g.referee)) + '</span>' : '';
+        return '<span style="cursor:pointer;text-decoration:underline dotted;" title="点击修改" onclick="promptEditGameScore(\'' + m._id + '\',' + i + ')">' + g.a + ':' + g.b + '</span>' + serverStr + receiverStr + refStr;
+      }).join(' / ')
+    : m.games.map(g => {
+        const serverName = g.server ? getPlayerName(g.server) : '';
+        const receiverName = g.receiver ? getPlayerName(g.receiver) : '';
+        const refName = getRefereeName(g.referee);
+        let extra = '';
+        if (serverName) extra += '发:' + serverName;
+        if (receiverName) extra += ' 接:' + receiverName;
+        if (refName) extra += ' 裁:' + refName;
+        return g.a + ':' + g.b + (extra ? '（' + extra.trim() + '）' : '');
+      }).join(' / ');
+  const noteHtml = m.note ? '<div style="font-size:12px;color:var(--text2);margin-top:4px;padding:4px 8px;background:var(--bg);border-radius:4px;">📝 ' + esc(m.note) + '</div>' : '';
+  const locHtml = m.location ? '<div style="font-size:11px;color:var(--text3);margin-top:2px;">📍 ' + esc(m.location) + '</div>' : '';
+  const deleteBtn = (showDelete && isAdmin === 'full') ? '<button class="btn btn-danger btn-sm" style="padding:3px 8px;font-size:10px;margin-top:4px;" onclick="deleteMatch(\'' + m._id + '\')">删除</button>' : '';
+  return `
+    <div class="match-item">
+      <div class="match-type-badge ${typeClass}">${m.type}</div>
+      <div class="match-body">
+        <div class="line"><b>${pA.join(' & ')}</b>${subA} vs <b>${pB.join(' & ')}</b>${subB}</div>
+        <div class="score-line">${gamesDisplay} <span style="font-size:12px;font-weight:500;color:${m.winner==='A'?'var(--primary)':'var(--info)'};">(${m.winner==='A'?'A方':'B方'}胜 ${m.winsA}:${m.winsB}局)</span></div>
+        ${noteHtml}
+        ${locHtml}
+        ${m.submitter ? '<div style="font-size:11px;color:var(--text3);margin-top:2px;">提交：' + esc(m.submitter) + '</div>' : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <div class="match-date">${time}</div>
+        ${deleteBtn}
+      </div>
+    </div>`;
+}
+
+async function promptEditGameScore(matchId, gameIdx) {
+  if (isAdmin !== 'full') return;
+  const m = state.matches.find(x => x._id === matchId);
+  if (!m || !m.games[gameIdx]) return;
+  const g = m.games[gameIdx];
+  const sa = prompt('修改第' + (gameIdx+1) + '局 A方比分（当前：' + g.a + '）', g.a);
+  if (sa === null) return;
+  const sb = prompt('修改第' + (gameIdx+1) + '局 B方比分（当前：' + g.b + '）', g.b);
+  if (sb === null) return;
+  const na = parseInt(sa) || 0, nb = parseInt(sb) || 0;
+  if (na < 0 || nb < 0) return showToast('比分不能为负');
+  const curRef = getRefereeName(g.referee);
+  const refInput = prompt('裁判员（直接输入姓名，留空则无裁判）', curRef || '');
+  m.games[gameIdx] = { ...g, a: na, b: nb, referee: (refInput || '').trim() };
+  let wa = 0, wb = 0;
+  m.games.forEach(g2 => { if (g2.a > g2.b) wa++; else wb++; });
+  m.winsA = wa; m.winsB = wb;
+  m.winner = wa > wb ? 'A' : 'B';
+  await cloudUpdateMatch(m);
+  renderHistory();
+  renderStats();
+  showToast('✅ 比分已更新');
+}
+
+async function deleteMatch(id) {
+  if (isAdmin !== 'full') return showToast('🔒 仅全权限管理员可删除比赛');
+  // 确认弹窗
+  const yn = confirm('⚠️ 确定要删除这条比赛记录吗？\n\n此操作不可撤销，数据将永久丢失！');
+  if (!yn) return;
+  await cloudDeleteMatch(id);
+  renderHistory();
+  renderStats();
+  renderPlayers();
+  showToast('已删除');
+}
+
+// ==================== Review ====================
+function renderReview() {
+  const list = document.getElementById('reviewList');
+  const pending = state.pendingMatches;
+
+  if (pending.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>暂无待审核比赛</p></div>';
+    return;
+  }
+
+  list.innerHTML = pending.map((m, idx) => {
+    const pA = m.teamA.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+    const pB = m.teamB.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+    const meta = TYPE_META[m.type] || {};
+    const time = m.matchTime ? formatDate(m.matchTime) : formatDate(m.createdAt);
+    const subA = m.teamASubType ? '（' + m.teamASubType + '）' : '';
+    const subB = m.teamBSubType ? '（' + m.teamBSubType + '）' : '';
+    const gamesStr = m.games.map(g => {
+      const serverName = g.server ? getPlayerName(g.server) : '';
+      const receiverName = g.receiver ? getPlayerName(g.receiver) : '';
+      const refName = getRefereeName(g.referee);
+      let extra = '';
+      if (serverName) extra += '发:' + serverName;
+      if (receiverName) extra += ' 接:' + receiverName;
+      if (refName) extra += ' 裁:' + refName;
+      return g.a + ':' + g.b + (extra ? '（' + extra.trim() + '）' : '');
+    }).join(' / ');
+    const noteHtml = m.note ? '<div style="font-size:12px;color:var(--text2);margin-top:4px;padding:4px 8px;background:#FFF8E1;border-radius:4px;">📝 ' + esc(m.note) + '</div>' : '';
+    const locHtml = m.location ? '<div style="font-size:11px;color:var(--text3);margin-top:2px;">📍 ' + esc(m.location) + '</div>' : '';
+    return `
+      <div class="review-item">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span class="match-type-badge ${meta.cls || ''}">${m.type}</span>
+          <span style="font-size:12px;color:var(--text3);">${time}</span>
+        </div>
+        <div style="font-size:14px;font-weight:600;">${pA.join(' & ')}${subA} vs ${pB.join(' & ')}${subB}</div>
+        <div style="font-size:15px;font-weight:700;margin-top:4px;">${gamesStr}
+          <span style="font-size:12px;font-weight:500;color:${m.winner==='A'?'var(--primary)':'var(--info)'};">(${m.winner==='A'?'A方':'B方'}胜 ${m.winsA}:${m.winsB}局)</span>
+        </div>
+        ${noteHtml}
+        ${locHtml}
+        <div class="review-submitter">📤 提交者：${esc(m.submitter || '匿名')}</div>
+        <div class="review-actions">
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="approveMatch(${idx})">✅ 通过</button>
+          <button class="btn btn-danger btn-sm" style="flex:1;" onclick="rejectMatch(${idx})">❌ 拒绝</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+const _approvingSet = new Set(); // 防重复提交锁
+async function approveMatch(idx) {
+  const match = state.pendingMatches[idx];
+  if (!match) return;
+  const lockId = match._id || idx;
+  if (_approvingSet.has(lockId)) { showToast('⏳ 正在处理，请勿重复点击'); return; }
+  _approvingSet.add(lockId);
+
+  // 立即从本地移除，防止重复操作
+  state.pendingMatches.splice(idx, 1);
+  renderReview();
+  updateReviewBadge();
+
+  const matchCopy = { ...match };
+  delete matchCopy._id;
+  try {
+    // 顺序很重要: 必须先"入库"、再"删待审核"
+    // 反过来一旦入库失败, 这条数据就永久消失了(服务端待审核已删 + 没进 matches)
+    if (!isOfflineMode && apiOnline) {
+      const saved = await apiFetch('matches', { method: 'POST', body: JSON.stringify(matchCopy) });
+      if (saved && saved._id) matchCopy._id = saved._id;
+      state.matches.unshift(matchCopy);
+      saveLocalFallback();
+      // 比赛已安全入库; 删除待审核失败不阻断(下次审核再删即可, 服务端幂等不会重复入库)
+      if (match._id) {
+        try { await apiFetch('pending/' + match._id, { method: 'DELETE' }); }
+        catch (e2) { console.warn('待审核记录删除失败(比赛已入库, 数据不受影响):', e2.message); }
+      }
+    } else {
+      state.matches.unshift(matchCopy);
+      saveLocalFallback();
+    }
+    showToast('✅ 已通过，比赛已入库');
+    renderHistory();
+    renderStats();
+  } catch(e) {
+    // 失败时把数据放回, 让用户重试(此时云端待审核记录还在, 不会丢数据)
+    state.pendingMatches.splice(idx, 0, match);
+    renderReview();
+    updateReviewBadge();
+    showToast('❌ 操作失败: ' + (e.message || '请重试'));
+  } finally {
+    _approvingSet.delete(lockId);
+  }
+}
+
+async function rejectMatch(idx) {
+  if (!confirm('确认拒绝并删除这条比赛记录？')) return;
+  const match = state.pendingMatches[idx];
+  await cloudRemovePending(match._id);
+  showToast('已拒绝并删除');
+  renderReview();
+  updateReviewBadge();
+}
+
+function updateReviewBadge() {
+  const cnt = state.pendingMatches.length;
+  const btn = document.getElementById('reviewTabBtn');
+  btn.innerHTML = '审核管理' + (cnt > 0 ? '<span class="badge-dot"></span>' : '');
+}
+
+// ==================== Stats ====================
+function renderStats() {
+  document.getElementById('totalMatches').textContent = state.matches.length;
+  document.getElementById('totalPlayers').textContent = state.players.length;
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  document.getElementById('todayMatches').textContent = state.matches.filter(m => m.createdAt >= todayStart.getTime()).length;
+
+  // 构建场地筛选列表（包含无记录地点）
+  const venueSet = {};
+  let hasNoLocation = false;
+  state.matches.forEach(m => {
+    const loc = (m.location || '').trim();
+    if (loc) {
+      venueSet[loc] = true;
+    } else {
+      hasNoLocation = true;
+    }
+  });
+  const venues = Object.keys(venueSet).sort();
+  const venueContainer = document.getElementById('venueFilter');
+  const venueCard = document.getElementById('venueFilterCard');
+
+  const showVenueCard = venues.length > 0 || hasNoLocation;
+  if (showVenueCard) {
+    venueCard.style.display = '';
+    let html = `<div class="stats-tab ${currentVenue === 'all' ? 'active' : ''}" data-venue="all">全部场地</div>`;
+    venues.forEach(v => {
+      html += `<div class="stats-tab ${currentVenue === v ? 'active' : ''}" data-venue="${esc(v)}">${esc(v)}</div>`;
+    });
+    if (hasNoLocation) {
+      html += `<div class="stats-tab ${currentVenue === '无记录地点' ? 'active' : ''}" data-venue="无记录地点">无记录地点</div>`;
+    }
+    venueContainer.innerHTML = html;
+    // 如果当前场地不在列表中，重置为全部
+    const allVenueNames = venues.concat(hasNoLocation ? ['无记录地点'] : []);
+    if (currentVenue !== 'all' && !allVenueNames.includes(currentVenue)) currentVenue = 'all';
+  } else {
+    venueCard.style.display = 'none';
+    currentVenue = 'all';
+  }
+
+  const statsFilter = getActiveFilter('statsFilter');
+  renderRank(statsFilter);
+  renderTotalWinRank();
+
+  const partnerFilter = getActiveFilter('partnerTypeFilter');
+  renderPartners(partnerFilter);
+  renderTotalPartnerRank();
+}
+
+// 获取场地筛选后的比赛列表
+function getVenueFilteredMatches() {
+  if (currentVenue === 'all') return state.matches;
+  return state.matches.filter(m => {
+    const loc = (m.location || '').trim();
+    if (currentVenue === '无记录地点') return loc === '';
+    return loc === currentVenue;
+  });
+}
+
+function renderRank(filter) {
+  const list = document.getElementById('rankList');
+  const baseMatches = getVenueFilteredMatches();
+  if (filter !== 'all') {
+    const subTypes = ['男双','混双','女双','男单','女单'];
+    if (subTypes.includes(filter)) {
+      // 按球员所在方子类型分别统计：只计入该方为该子类型的球员
+      const ranked = calcPlayerStatsBySubType(filter, baseMatches);
+      if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>'; return; }
+      list.innerHTML = renderRankRows(ranked);
+      return;
+    } else {
+      const matches = baseMatches.filter(m => m.type === filter);
+      const ranked = calcPlayerStats(matches);
+      if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>'; return; }
+      list.innerHTML = renderRankRows(ranked);
+      return;
+    }
+  }
+  const ranked = calcPlayerStats(baseMatches);
+  if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>'; return; }
+  list.innerHTML = renderRankRows(ranked);
+}
+
+function renderTotalWinRank() {
+  const list = document.getElementById('totalWinRankList');
+  const ranked = calcPlayerStats(getVenueFilteredMatches());
+  if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>'; return; }
+  list.innerHTML = renderRankRows(ranked);
+}
+
+// 统计门槛：总场次 >= MIN_MATCHES 或该单项场次 >= MIN_MATCHES 才进入排行榜
+const MIN_MATCHES = 10;
+
+// 计算每位球员的总参赛场次（可选传入 matchesOverride 用于场地筛选场景）
+function calcPlayerTotalMatches(matchesOverride) {
+  const matches = matchesOverride || state.matches;
+  const idMap = {};
+  const totals = {};
+  state.players.forEach(p => {
+    if (p._id) idMap[p._id] = p.id;
+    if (p.id) idMap[p.id] = p.id;
+    totals[p.id] = 0;
+  });
+  matches.forEach(m => {
+    [...m.teamA, ...m.teamB].forEach(rawId => {
+      const id = idMap[rawId] || rawId;
+      if (totals[id] !== undefined) totals[id]++;
+    });
+  });
+  return totals;
+}
+
+function calcPlayerStats(matches) {
+  const stats = {};
+  // 同时兼容 _id 和 id 两种格式，构建双向映射
+  const idMap = {};
+  state.players.forEach(p => {
+    if (p._id) idMap[p._id] = p.id;
+    if (p.id) idMap[p.id] = p.id;
+    if ((p.name || '').startsWith('路人')) return; // 路人甲乙丙丁不参与排行
+    stats[p.id] = { pid: p.id, name: p.name, wins: 0, losses: 0, totalGames: 0, pointsWon: 0, pointsLost: 0 };
+  });
+  matches.forEach(m => {
+    [
+      { players: m.teamA, isWin: m.winner === 'A' },
+      { players: m.teamB, isWin: m.winner === 'B' }
+    ].forEach(side => {
+      side.players.forEach(rawId => {
+        const id = idMap[rawId] || rawId;
+        if (!stats[id]) return;
+        if (side.isWin) stats[id].wins++; else stats[id].losses++;
+        m.games.forEach(g => {
+          const isA = (m.teamA.includes(rawId));
+          stats[id].pointsWon += isA ? g.a : g.b;
+          stats[id].pointsLost += isA ? g.b : g.a;
+        });
+        stats[id].totalGames += m.games.length;
+      });
+    });
+  });
+  const totalMatchMap = calcPlayerTotalMatches(matches);
+  return Object.values(stats)
+    .filter(s => {
+      const itemTotal = s.wins + s.losses;
+      if (itemTotal === 0) return false;
+      if (itemTotal >= MIN_MATCHES) return true;
+      return (totalMatchMap[s.pid] || 0) >= MIN_MATCHES;
+    })
+    .sort((a, b) => {
+      const rA = a.wins / (a.wins + a.losses), rB = b.wins / (b.wins + b.losses);
+      if (rB !== rA) return rB - rA;
+      return (b.wins + b.losses) - (a.wins + a.losses);
+    });
+}
+
+// 按子类型（男双/女双/混双/男单/女单）分别统计：仅计入该方匹配子类型的球员
+function calcPlayerStatsBySubType(subType, matchesOverride) {
+  const matches = matchesOverride || state.matches;
+  const stats = {};
+  const idMap = {};
+  state.players.forEach(p => {
+    if (p._id) idMap[p._id] = p.id;
+    if (p.id) idMap[p.id] = p.id;
+    if ((p.name || '').startsWith('路人')) return; // 路人甲乙丙丁不参与排行
+    stats[p.id] = { pid: p.id, name: p.name, wins: 0, losses: 0, totalGames: 0, pointsWon: 0, pointsLost: 0 };
+  });
+  matches.forEach(m => {
+    const aOk = m.teamASubType === subType;
+    const bOk = m.teamBSubType === subType;
+    if (!aOk && !bOk) return;
+    if (aOk) {
+      m.teamA.forEach(rawId => {
+        const id = idMap[rawId] || rawId;
+        if (!stats[id]) return;
+        if (m.winner === 'A') stats[id].wins++; else stats[id].losses++;
+        m.games.forEach(g => { stats[id].pointsWon += g.a; stats[id].pointsLost += g.b; });
+        stats[id].totalGames += m.games.length;
+      });
+    }
+    if (bOk) {
+      m.teamB.forEach(rawId => {
+        const id = idMap[rawId] || rawId;
+        if (!stats[id]) return;
+        if (m.winner === 'B') stats[id].wins++; else stats[id].losses++;
+        m.games.forEach(g => { stats[id].pointsWon += g.b; stats[id].pointsLost += g.a; });
+        stats[id].totalGames += m.games.length;
+      });
+    }
+  });
+  const totalMatchMap = calcPlayerTotalMatches(matches);
+  return Object.values(stats)
+    .filter(s => {
+      const itemTotal = s.wins + s.losses;
+      if (itemTotal === 0) return false;
+      // 单项 >= 门槛 或 总场次 >= 门槛
+      if (itemTotal >= MIN_MATCHES) return true;
+      return (totalMatchMap[s.pid] || 0) >= MIN_MATCHES;
+    })
+    .sort((a, b) => {
+      const rA = a.wins / (a.wins + a.losses), rB = b.wins / (b.wins + b.losses);
+      if (rB !== rA) return rB - rA;
+      return (b.wins + b.losses) - (a.wins + a.losses);
+    });
+}
+
+function renderRankRows(ranked) {
+  const maxTotal = Math.max(...ranked.map(s => s.wins + s.losses), 1);
+  return ranked.map((s, i) => {
+    const total = s.wins + s.losses;
+    const rate = total > 0 ? Math.round(s.wins / total * 100) : 0;
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const barWidth = total / maxTotal * 100;
+    const pointRate = s.pointsWon + s.pointsLost > 0 ? Math.round(s.pointsWon / (s.pointsWon + s.pointsLost) * 100) : 0;
+    return `
+      <div class="stat-row">
+        <div class="stat-rank ${rankClass}">${i + 1}</div>
+        <div class="stat-info">
+          <div class="stat-name">${esc(s.name)}</div>
+          <div class="stat-detail">${s.wins}胜 ${s.losses}负 · ${s.totalGames}局 · 得分率${pointRate}%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:${barWidth}%"></div></div>
+        </div>
+        <div class="stat-value" style="color:var(--primary);">${rate}%</div>
+      </div>`;
+  }).join('');
+}
+
+function renderPartners(filter) {
+  const list = document.getElementById('partnerList');
+  const sortBy = getActiveSort('partnerSortFilter');
+  const isCount = sortBy === 'count';
+  const baseMatches = getVenueFilteredMatches();
+
+  if (filter === 'all') {
+    const matches = baseMatches.filter(m => m.teamA.length >= 2 && m.teamB.length >= 2);
+    const ranked = calcPartnerStats(matches, sortBy);
+    if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无搭档数据</p></div>'; return; }
+    list.innerHTML = isCount ? renderPartnerRowsByCount(ranked) : renderPartnerRows(ranked);
+    return;
+  }
+  const subTypes = ['男双','混双','女双','男单','女单'];
+  if (subTypes.includes(filter)) {
+    const ranked = calcPartnerStatsBySubType(filter, sortBy, baseMatches);
+    if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无搭档数据</p></div>'; return; }
+    list.innerHTML = isCount ? renderPartnerRowsByCount(ranked) : renderPartnerRows(ranked);
+  } else {
+    const matches = baseMatches.filter(m => m.type === filter && m.teamA.length >= 2 && m.teamB.length >= 2);
+    const ranked = calcPartnerStats(matches, sortBy);
+    if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无搭档数据</p></div>'; return; }
+    list.innerHTML = isCount ? renderPartnerRowsByCount(ranked) : renderPartnerRows(ranked);
+  }
+}
+
+function renderTotalPartnerRank() {
+  const list = document.getElementById('totalPartnerRankList');
+  const matches = getVenueFilteredMatches().filter(m => m.teamA.length >= 2 && m.teamB.length >= 2);
+  const ranked = calcPartnerStats(matches, 'count');
+  if (ranked.length === 0) { list.innerHTML = '<div class="empty-state"><p>暂无搭档数据</p></div>'; return; }
+  list.innerHTML = renderPartnerRowsByCount(ranked);
+}
+
+function calcPartnerStats(matches, sortBy) {
+  const pairs = {};
+  sortBy = sortBy || 'rate';
+  // 构建球员姓名映射，用于判断路人
+  const playerNames = {};
+  state.players.forEach(p => { playerNames[p.id || p._id] = p.name || ''; });
+  const isAllLuren = (playerIds) => playerIds.every(id => (playerNames[id] || id || '').startsWith('路人'));
+
+  matches.forEach(m => {
+    const processTeam = (team, isWin) => {
+      if (isAllLuren(team)) return; // 全是路人不计入搭档排行
+      const key = [...team].sort().join('+');
+      if (!pairs[key]) pairs[key] = { players: [...team], wins: 0, losses: 0, matchList: [] };
+      if (isWin) pairs[key].wins++; else pairs[key].losses++;
+      pairs[key].matchList.push(m);
+    };
+    if (m.teamA.length >= 2) processTeam(m.teamA, m.winner === 'A');
+    if (m.teamB.length >= 2) processTeam(m.teamB, m.winner === 'B');
+  });
+  return Object.values(pairs).sort((a, b) => {
+    const totalA = a.wins + a.losses, totalB = b.wins + b.losses;
+    if (sortBy === 'count') {
+      if (totalB !== totalA) return totalB - totalA;
+      const rA = totalA > 0 ? a.wins / totalA : 0, rB = totalB > 0 ? b.wins / totalB : 0;
+      if (rB !== rA) return rB - rA;
+      return 0;
+    }
+    const rA = totalA > 0 ? a.wins / totalA : 0, rB = totalB > 0 ? b.wins / totalB : 0;
+    if (rB !== rA) return rB - rA;
+    return totalB - totalA;
+  });
+}
+
+// 按子类型分别统计搭档：仅计入该方匹配子类型的配对
+function calcPartnerStatsBySubType(subType, sortBy, matchesOverride) {
+  sortBy = sortBy || 'rate';
+  const matches = matchesOverride || state.matches;
+  const pairs = {};
+  // 构建球员姓名映射，用于判断路人
+  const playerNames = {};
+  state.players.forEach(p => { playerNames[p.id || p._id] = p.name || ''; });
+  const isAllLuren = (playerIds) => playerIds.every(id => (playerNames[id] || id || '').startsWith('路人'));
+
+  matches.forEach(m => {
+    const aOk = m.teamASubType === subType && m.teamA.length >= 2;
+    const bOk = m.teamBSubType === subType && m.teamB.length >= 2;
+    if (aOk && !isAllLuren(m.teamA)) {
+      const key = [...m.teamA].sort().join('+');
+      if (!pairs[key]) pairs[key] = { players: [...m.teamA], wins: 0, losses: 0, matchList: [] };
+      if (m.winner === 'A') pairs[key].wins++; else pairs[key].losses++;
+      pairs[key].matchList.push(m);
+    }
+    if (bOk && !isAllLuren(m.teamB)) {
+      const key = [...m.teamB].sort().join('+');
+      if (!pairs[key]) pairs[key] = { players: [...m.teamB], wins: 0, losses: 0, matchList: [] };
+      if (m.winner === 'B') pairs[key].wins++; else pairs[key].losses++;
+      pairs[key].matchList.push(m);
+    }
+  });
+  return Object.values(pairs).sort((a, b) => {
+    const totalA = a.wins + a.losses, totalB = b.wins + b.losses;
+    if (sortBy === 'count') {
+      if (totalB !== totalA) return totalB - totalA;
+      const rA = totalA > 0 ? a.wins / totalA : 0, rB = totalB > 0 ? b.wins / totalB : 0;
+      if (rB !== rA) return rB - rA;
+      return 0;
+    }
+    const rA = totalA > 0 ? a.wins / totalA : 0, rB = totalB > 0 ? b.wins / totalB : 0;
+    if (rB !== rA) return rB - rA;
+    return totalB - totalA;
+  });
+}
+
+// 全局缓存搭档详情，供弹窗使用
+let _partnerDetailCache = {};
+
+function renderPartnerRows(ranked) {
+  // 重置缓存
+  _partnerDetailCache = {};
+  return ranked.slice(0, 12).map((pair, i) => {
+    const names = pair.players.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+    const total = pair.wins + pair.losses;
+    const rate = total > 0 ? Math.round(pair.wins / total * 100) : 0;
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    // 存入缓存，key 用排名索引
+    const cacheKey = 'pair_' + i;
+    _partnerDetailCache[cacheKey] = pair;
+    return `
+      <div class="stat-row" style="cursor:pointer;" onclick="openPartnerDetail('${cacheKey}')">
+        <div class="stat-rank ${rankClass}">${i + 1}</div>
+        <div class="stat-info">
+          <div class="stat-name">${names.join(' & ')}</div>
+          <div class="stat-detail">${pair.wins}胜 ${pair.losses}负 · 共${total}场 · 点击查看详情</div>
+        </div>
+        <div class="stat-value" style="color:var(--primary);">${rate}%</div>
+      </div>`;
+  }).join('');
+}
+
+function renderPartnerRowsByCount(ranked) {
+  _partnerDetailCache = {};
+  return ranked.slice(0, 12).map((pair, i) => {
+    const names = pair.players.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+    const total = pair.wins + pair.losses;
+    const rate = total > 0 ? Math.round(pair.wins / total * 100) : 0;
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const cacheKey = 'pair_' + i;
+    _partnerDetailCache[cacheKey] = pair;
+    return `
+      <div class="stat-row" style="cursor:pointer;" onclick="openPartnerDetail('${cacheKey}')">
+        <div class="stat-rank ${rankClass}">${i + 1}</div>
+        <div class="stat-info">
+          <div class="stat-name">${names.join(' & ')}</div>
+          <div class="stat-detail">${total}场 · ${pair.wins}胜${pair.losses}负 · 胜率${rate}% · 点击查看详情</div>
+        </div>
+        <div class="stat-value" style="color:var(--info);">${total}场</div>
+      </div>`;
+  }).join('');
+}
+
+// ==================== Utils ====================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatDate(ts) {
+  const d = new Date(ts), now = new Date();
+  const time = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  if (d.toDateString() === now.toDateString())
+    return '今天 ' + time;
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString())
+    return '昨天 ' + time;
+  return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + time;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function renderAll() {
+  updateTeamDisplay();
+}
+
+// ==================== 球员战绩详情弹窗 ====================
+const DETAIL_CATEGORIES = ['男双','女双','混双','男单','女单','团体赛','无羽伦比'];
+
+// 球员详情弹窗：各分类比赛记录缓存（点击展开用）
+let _playerDetailCatGames = {};
+let _playerDetailCurrent = null; // 当前展开的球员
+
+function openPlayerDetail(playerId) {
+  const player = state.players.find(p => p._id === playerId || p.id === playerId);
+  _playerDetailCurrent = player;
+  if (!player) return;
+
+  // 筛选涉及该球员的所有比赛（同时兼容 _id 和 id，以及对象/字符串格式）
+  const myMatches = state.matches.filter(m => {
+    function toId(item) {
+      if (!item) return null;
+      if (typeof item === 'string') return item;
+      if (typeof item === 'object') return item._id || item.id || null;
+      return null;
+    }
+    const teamAIds = (m.teamA || []).map(toId).filter(Boolean);
+    const teamBIds = (m.teamB || []).map(toId).filter(Boolean);
+    const inTeamA = teamAIds.includes(player._id) || teamAIds.includes(player.id);
+    const inTeamB = teamBIds.includes(player._id) || teamBIds.includes(player.id);
+    if (!inTeamA && !inTeamB) return false;
+    m._mySide = inTeamA ? 'A' : 'B';
+    return true;
+  });
+
+  // 构建各分类比赛记录缓存
+  _playerDetailCatGames = {};
+  let totalWins = 0, totalLosses = 0;
+
+  let html = '<div class="p-header"><h3>' + esc(player.name) + '</h3>';
+  html += '<div class="p-sub">共参与 ' + myMatches.length + ' 场比赛</div>';
+  html += '<button class="close-btn" onclick="closePlayerDetail()">✕</button></div>';
+
+  let hasData = false;
+  DETAIL_CATEGORIES.forEach(cat => {
+    const catMatches = myMatches.filter(m => {
+      const side = m._mySide;
+      const subType = side === 'A' ? m.teamASubType : m.teamBSubType;
+      return subType === cat || (cat === '团体赛' && m.type === '团体赛') || (cat === '无羽伦比' && m.type === '无羽伦比');
+    });
+    if (catMatches.length === 0) return;
+    hasData = true;
+
+    // 按时间倒序缓存
+    _playerDetailCatGames[cat] = [...catMatches].sort((a, b) =>
+      (b.matchTime || b.createdAt || 0) - (a.matchTime || a.createdAt || 0)
+    );
+
+    let wins = 0, losses = 0;
+    catMatches.forEach(m => {
+      if (m.winner === m._mySide) wins++; else losses++;
+    });
+    const total = wins + losses;
+    const rate = total > 0 ? Math.round(wins / total * 100) : 0;
+    const barColor = rate >= 60 ? 'var(--primary)' : (rate >= 40 ? 'var(--orange)' : 'var(--info)');
+    totalWins += wins; totalLosses += losses;
+    const safecat = cat.replace(/[^a-zA-Z\u4e00-\u9fa5]/g, '');
+
+    html += '<div class="stat-row-detail cat-row-clickable" onclick="togglePlayerCat(\'' + safecat + '\')" id="pdcat_' + safecat + '">';
+    html += '<div class="stat-type">' + cat + '</div>';
+    html += '<div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:' + rate + '%;background:' + barColor + ';"></div></div>';
+    html += '<div class="stat-num">' + wins + '胜' + losses + '负 · ' + rate + '%</div>';
+    html += '<div class="cat-toggle-arrow" id="pdarrow_' + safecat + '">▼</div>';
+    html += '</div>';
+    html += '<div class="cat-match-list" id="pdlist_' + safecat + '" style="display:none"></div>';
+  });
+
+  if (!hasData) {
+    html += '<div class="p-nodata">暂无比赛数据</div>';
+  } else {
+    const totalRate = totalWins + totalLosses > 0 ? Math.round(totalWins / (totalWins + totalLosses) * 100) : 0;
+    html += '<div class="stat-row-detail" style="border-top:2px solid var(--border);margin-top:8px;padding-top:12px;">';
+    html += '<div class="stat-type" style="color:var(--primary);">总计</div>';
+    html += '<div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:' + totalRate + '%;background:var(--primary);"></div></div>';
+    html += '<div class="stat-num" style="font-weight:700;">' + totalWins + '胜' + totalLosses + '负 · ' + totalRate + '%</div>';
+    html += '</div>';
+  }
+
+  document.getElementById('playerDetailModal').innerHTML = html;
+  document.getElementById('playerDetailOverlay').classList.add('show');
+}
+
+// 展开/折叠球员详情中某分类的比赛记录
+function togglePlayerCat(safecat) {
+  const listEl = document.getElementById('pdlist_' + safecat);
+  const arrowEl = document.getElementById('pdarrow_' + safecat);
+  if (!listEl) return;
+
+  const isOpen = listEl.style.display !== 'none';
+  if (isOpen) {
+    listEl.style.display = 'none';
+    if (arrowEl) arrowEl.textContent = '▼';
+    return;
+  }
+
+  // 找对应的 cat（safecat 是去掉特殊字符后的）
+  const cat = DETAIL_CATEGORIES.find(c => c.replace(/[^a-zA-Z\u4e00-\u9fa5]/g, '') === safecat);
+  const games = _playerDetailCatGames[cat] || [];
+
+  if (games.length === 0) {
+    listEl.innerHTML = '<div class="cat-match-empty">暂无记录</div>';
+  } else {
+    let rowHtml = '';
+    games.forEach(m => {
+      const side = m._mySide;
+      const isWin = m.winner === side;
+      const myTeamRaw = side === 'A' ? m.teamA : m.teamB;
+      const oppTeamRaw = side === 'A' ? m.teamB : m.teamA;
+      const player = _playerDetailCurrent;
+      const myIds = [player._id, player.id].filter(Boolean);
+
+      // 统一提取 ID 和名字（兼容字符串 ID 和对象格式）
+      function extractInfo(item) {
+        if (!item) return { id: null, name: '' };
+        if (typeof item === 'string') return { id: item, name: getPlayerName(item) };
+        if (typeof item === 'object') return { id: item._id || item.id || null, name: item.name || getPlayerName(item._id || item.id) || '' };
+        return { id: null, name: String(item) };
+      }
+
+      // 队友（除自己外）
+      const teammates = myTeamRaw
+        .map(extractInfo).filter(x => x.id && !myIds.includes(x.id))
+        .map(x => x.name).filter(Boolean);
+      // 对手
+      const opps = oppTeamRaw.map(extractInfo).map(x => x.name).filter(Boolean);
+
+      const score = (m.games || []).map(g => {
+        const myS = side === 'A' ? g.a : g.b;
+        const oppS = side === 'A' ? g.b : g.a;
+        return myS + ':' + oppS;
+      }).join('  ');
+
+      const timeStr = m.matchTime
+        ? new Date(m.matchTime).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+        : (m.createdAt ? new Date(m.createdAt).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '');
+
+      rowHtml += '<div class="cat-match-row">';
+      rowHtml += '<div class="cat-match-top"><span class="cat-match-time">' + timeStr + '</span>';
+      rowHtml += '<span class="cat-match-result ' + (isWin ? 'result-win' : 'result-lose') + '">' + (isWin ? '胜' : '负') + '</span></div>';
+      if (teammates.length > 0) {
+        rowHtml += '<div class="cat-match-detail">🤝 队友：' + esc(teammates.join(' & ')) + '</div>';
+      }
+      rowHtml += '<div class="cat-match-detail">⚔️ 对手：' + esc(opps.join(' & ')) + '</div>';
+      rowHtml += '<div class="cat-match-score">比分：' + esc(score || '—') + '</div>';
+      if (m.location) rowHtml += '<div class="cat-match-location">📍 ' + esc(m.location) + '</div>';
+      rowHtml += '</div>';
+    });
+    listEl.innerHTML = rowHtml;
+  }
+
+  listEl.style.display = 'block';
+  if (arrowEl) arrowEl.textContent = '▲';
+}
+
+function closePlayerDetail() {
+  document.getElementById('playerDetailOverlay').classList.remove('show');
+  _playerDetailCatGames = {};
+}
+
+// ==================== 搭档详情弹窗 ====================
+function openPartnerDetail(cacheKey) {
+  const pair = _partnerDetailCache[cacheKey];
+  if (!pair) return;
+
+  const names = pair.players.map(id => state.players.find(p => p._id === id || p.id === id)).filter(Boolean).map(p => p.name);
+  const total = pair.wins + pair.losses;
+  const rate = total > 0 ? Math.round(pair.wins / total * 100) : 0;
+
+  let html = '<div class="p-header">';
+  html += '<h3>' + names.join(' & ') + '</h3>';
+  html += '<div class="p-sub">' + pair.wins + '胜 ' + pair.losses + '负 · 共' + total + '场 · 胜率' + rate + '%</div>';
+  html += '<button class="close-btn" onclick="closePartnerDetail()">✕</button>';
+  html += '</div>';
+
+  // 按时间倒序排列比赛记录
+  const sortedMatches = [...(pair.matchList || [])].sort((a, b) => {
+    const ta = a.matchTime || a.createdAt || 0;
+    const tb = b.matchTime || b.createdAt || 0;
+    return tb - ta;
+  });
+
+  if (sortedMatches.length === 0) {
+    html += '<div class="p-nodata">暂无比赛记录</div>';
+  } else {
+    html += '<div style="margin-top:4px;">';
+    sortedMatches.forEach(m => {
+      const pairKey = [...pair.players].sort().join('+');
+      const myTeamIsA = [...m.teamA].sort().join('+') === pairKey;
+      const myTeam = myTeamIsA ? m.teamA : m.teamB;
+      const oppTeam = myTeamIsA ? m.teamB : m.teamA;
+      const isWin = m.winner === (myTeamIsA ? 'A' : 'B');
+
+      const oppNames = oppTeam.map(id => {
+        const p = state.players.find(p => p._id === id || p.id === id);
+        return p ? p.name : id;
+      }).join(' & ');
+
+      const score = (m.games || []).map(g => {
+        const myScore = myTeamIsA ? g.a : g.b;
+        const oppScore = myTeamIsA ? g.b : g.a;
+        return myScore + ':' + oppScore;
+      }).join('  ');
+
+      const time = m.matchTime ? formatDate(m.matchTime) : (m.createdAt ? formatDate(m.createdAt) : '');
+      const subType = myTeamIsA ? (m.teamASubType || '') : (m.teamBSubType || '');
+      const winColor = isWin ? 'var(--primary)' : 'var(--danger, #e53935)';
+      const winLabel = isWin ? '胜' : '负';
+
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">';
+      html += '<div style="font-size:12px;color:var(--text2);">' + time + (subType ? '  · ' + subType : '') + '</div>';
+      html += '<div style="font-size:13px;font-weight:700;color:' + winColor + ';">' + winLabel + '</div>';
+      html += '</div>';
+      html += '<div style="font-size:13px;color:var(--text1);">vs ' + esc(oppNames) + '</div>';
+      html += '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' + (score || '无比分') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('playerDetailModal').innerHTML = html;
+  document.getElementById('playerDetailOverlay').classList.add('show');
+}
+
+function closePartnerDetail() {
+  document.getElementById('playerDetailOverlay').classList.remove('show');
+}
+
+// ==================== Start ====================
+initApi();
+</script>
+</body>
+</html>
