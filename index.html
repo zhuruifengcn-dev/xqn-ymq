@@ -1223,7 +1223,10 @@ function closeAdminModal() {
 }
 
 function submitAdminPw() {
-  const pw = document.getElementById('adminPwInput').value;
+  // 归一化：去掉空白与零宽字符并统一小写，避免输入法/复制粘贴/首字母大写导致误报密码错误
+  const pw = (document.getElementById('adminPwInput').value || '')
+    .replace(/[\s\u00a0\u200b-\u200d\ufeff]/g, '')
+    .toLowerCase();
   if (pw === ADMIN_PASSWORD_FULL) {
     isAdmin = 'full';
     closeAdminModal();
