@@ -2,11 +2,28 @@
  * 浏览器端到端验证：真实渲染 + 交互 + 存档持久化 + 截图
  */
 import { fileURLToPath, pathToFileURL } from 'url';
+import fs from 'fs';
 import path from 'path';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const PW = 'C:/Users/朱瑞丰/.workbuddy/binaries/node/workspace/node_modules/playwright-core/index.mjs';
 const { chromium } = await import(pathToFileURL(PW).href);
+
+/** 浏览器可执行文件优先级：显式指定 > Playwright Chromium > 系统 Edge > 系统 Chrome */
+function pickBrowser() {
+  if (process.env.BROWSER_PATH) return process.env.BROWSER_PATH;
+  const candidates = [
+    'C:/Users/朱瑞丰/AppData/Local/ms-playwright/chromium-1247/chrome-win64/chrome.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  ];
+  for (const p of candidates) if (fs.existsSync(p)) return p;
+  return undefined; // 交给 Playwright 自行解析
+}
+const BROWSER = pickBrowser();
+console.log('浏览器:', BROWSER || '(playwright default)');
 const OUT = path.join(__dir, 'shots');
 const URL = process.env.GAME_URL || 'http://127.0.0.1:8899/GAME/';
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
@@ -14,7 +31,7 @@ const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const results = [];
 const chk = (n, c, x = '') => results.push({ n, ok: !!c, x });
 
-const browser = await chromium.launch({ executablePath: EDGE, headless: true });
+const browser = await chromium.launch({ executablePath: BROWSER, headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
 
