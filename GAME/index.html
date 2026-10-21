@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>苍澜拓土录 · 无限边疆开疆RPG</title>
+<meta name="description" content="苍澜拓土录：远古苍澜大朝覆灭后，中原朝廷衰弱，西陲万里皆为无主废土。你是朝廷任命的云边镇疆牧守，开荒、重建、安民、平乱、拓土、教化，永不完结。">
+<meta name="keywords" content="苍澜拓土录,三国志,网页游戏,SLG,经营,开荒,守土开疆">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="top-row">
+      <div class="brand">苍澜拓土录<small>苍澜旧历三一七年 · 云边镇疆牧守 · 无限边疆开疆</small></div>
+      <div class="top-btns">
+        <button class="tb" id="btn-panel">政务面板</button>
+        <button class="tb" id="btn-log">编年史</button>
+        <button class="tb" id="btn-save">存档</button>
+        <button class="tb" id="btn-menu">行动</button>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="on" data-v="stage">剧情</button>
+      <button data-v="menu">行动</button>
+    </nav>
+  </header>
+
+  <div class="main">
+    <main>
+      <section id="view-stage">
+        <div id="stage" class="ev-wrap"></div>
+      </section>
+      <section id="view-menu" style="display:none">
+        <div id="menu"></div>
+      </section>    </main>
+
+    <aside class="side">
+      <div class="card" id="panel"></div>
+      <div class="card hidden" id="logbox">
+        <div class="card-t">编年史</div>
+        <div id="log"></div>
+      </div>
+
+    </aside>
+  </div>
+
+  <nav class="tabbar">
+    <button class="on" data-v="stage">剧情</button>
+    <button data-v="menu">行动</button>
+    <button onclick="document.getElementById('btn-panel').click()">政务</button>
+    <button onclick="document.getElementById('btn-log').click()">编年</button>
+    <button onclick="document.getElementById('btn-save').click()">存档</button>
+  </nav>
+
+  <div class="modal" id="modal"></div>
+</div>
+
+<script type="module" src="js/ui.js"></script>
+</body>
+</html>
